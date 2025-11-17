@@ -5,6 +5,12 @@ public class Activity {
     private final float duration;
     private final Tag tag;
 
+    public Activity(String description, Tag tag) {
+        this.description = description;
+        this.duration = -1;
+        this.tag = tag;
+    }
+
     public Activity(String description, float duration, Tag tag) {
         this.description = description;
         this.duration = duration;

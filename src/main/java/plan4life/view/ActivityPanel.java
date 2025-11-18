@@ -2,7 +2,6 @@ package plan4life.view;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class ActivityPanel extends JPanel {
     private final DefaultListModel<String> activityListModel = new DefaultListModel<>();
@@ -23,25 +22,5 @@ public class ActivityPanel extends JPanel {
 
         add(inputPanel, BorderLayout.NORTH);
         add(listScroll, BorderLayout.CENTER);
-    }
-
-    public JButton getAddButton() {
-        return addButton;
-    }
-
-    public String getActivityNameInput() {
-        return inputField.getText();
-    }
-
-    public void clearInputField() {
-        inputField.setText("");
-    }
-
-    public void setActivities(List<String> activities) {
-        activityListModel.clear();
-        if (activities == null) return;
-        for (String s : activities) {
-            activityListModel.addElement(s);
-        }
     }
 }

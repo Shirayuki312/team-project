@@ -6,9 +6,14 @@ import plan4life.use_case.generate_schedule.*;
 import plan4life.use_case.lock_activity.*;
 import plan4life.entities.Schedule;
 import plan4life.view.CalendarViewInterface;
+import plan4life.use_case.add_activity.AddActivityOutputBoundary;
+import plan4life.use_case.add_activity.AddActivityResponseModel;
 
 public class CalendarPresenter implements
-        GenerateScheduleOutputBoundary, LockActivityOutputBoundary, BlockOffTimeOutputBoundary {
+        GenerateScheduleOutputBoundary,
+        LockActivityOutputBoundary,
+        BlockOffTimeOutputBoundary,
+        AddActivityOutputBoundary {
 
     private final CalendarViewInterface view;
 
@@ -34,5 +39,15 @@ public class CalendarPresenter implements
             view.displaySchedule(response.getUpdatedSchedule());
         }
         view.showMessage(response.getMessage());
+    }
+    
+    @Override
+    public void present(AddActivityResponseModel responseModel) {
+        if (responseModel.getPendingActivities() != null) {
+            view.updateActivityList(responseModel.getPendingActivities());
+        }
+        if (responseModel.getMessage() != null && !responseModel.getMessage().isEmpty()) {
+            view.showMessage(responseModel.getMessage());
+        }
     }
 }

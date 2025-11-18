@@ -10,6 +10,7 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
 import plan4life.view.CalendarFrame;
 import plan4life.use_case.lock_activity.*;
+import plan4life.use_case.add_activity.*;
 
 import javax.swing.*;
 
@@ -27,6 +28,10 @@ public class Main {
             BlockOffTimeInputBoundary interactor = new BlockOffTimeInteractor(scheduleDAO, presenter);
             BlockOffTimeController controller = new BlockOffTimeController(interactor);
 
+            AddActivityOutputBoundary addActivityPresenter = new CalendarPresenter(view);
+            AddActivityInputBoundary addActivityInteractor = new AddActivityInteractor(addActivityPresenter);
+            AddActivityController addActivityController = new AddActivityController(addActivityInteractor);
+
 
             // Added GenerateSchedule and LockActivity to main. GenerateSchedule still needs work, needs to take 1 more input
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
@@ -36,6 +41,7 @@ public class Main {
             LockActivityInputBoundary lock_interactor = new LockActivityInteractor(lock_presenter, scheduleDAO);
             CalendarController calendarController = new CalendarController(scheduleInput, lock_interactor);
 
+            view.setAddActivityController(addActivityController);
             view.setCalendarController(calendarController);
             view.setBlockOffTimeController(controller);
             view.setVisible(true);

@@ -36,11 +36,3 @@ build/
 
 ### Mac OS ###
 .DS_Store
-
-# Java compiled classes
-*.class
-
-# Common build output dirs
-/target/
-/out/
-/bin/

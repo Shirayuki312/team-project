@@ -18,23 +18,16 @@ import plan4life.controller.SettingsController;
 import java.awt.event.ActionListener;
 // (ActionEvent is already imported by your teammate)
 
-import plan4life.use_case.add_activity.AddActivityController;
-import java.util.List;
-
-
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
     private BlockOffTimeController blockOffTimeController;
     private Schedule currentSchedule;
     private CalendarController calendarController; // added controller
-    private AddActivityController addActivityController;
 
     // --- 2. ADD SETTINGS MEMBER VARIABLES ---
     private SettingsView settingsView;
     private SettingsController settingsController;
-
-    
 
 
     public CalendarFrame() {
@@ -140,56 +133,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
     }
-    public void setAddActivityController(AddActivityController controller) {
-        this.addActivityController = controller;
 
-        activityPanel.getAddButton().addActionListener(e -> {
-            String name = activityPanel.getActivityNameInput().trim();
-            if (name.isEmpty()) {
-                showMessage("Activity name cannot be empty.");
-                return;
-            }
-
-            String durationStr = JOptionPane.showInputDialog(
-                    this,
-                    "Enter duration in hours (e.g., 1.5):",
-                    "Activity Duration",
-                    JOptionPane.QUESTION_MESSAGE
-            );
-            if (durationStr == null) {
-                return;
-            }
-
-            float duration;
-            try {
-                duration = Float.parseFloat(durationStr);
-            } catch (NumberFormatException ex) {
-                showMessage("Invalid duration. Please enter a number.");
-                return;
-            }
-
-            String tagName = JOptionPane.showInputDialog(
-                    this,
-                    "Optional tag (leave blank if none):",
-                    "Activity Tag",
-                    JOptionPane.QUESTION_MESSAGE
-            );
-            if (tagName != null && tagName.isBlank()) {
-                tagName = null;
-            }
-
-            if (addActivityController != null) {
-                addActivityController.addActivity(name, duration, tagName);
-            }
-
-            activityPanel.clearInputField();
-        });
-    }
-    
-    @Override
-    public void updateActivityList(List<String> activities) {
-        activityPanel.setActivities(activities);
-    }
 
     @Override
     public void showMessage(String message) {

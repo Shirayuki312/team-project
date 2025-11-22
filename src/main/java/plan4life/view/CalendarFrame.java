@@ -34,9 +34,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private SettingsView settingsView;
     private SettingsController settingsController;
 
-    
-
-
     public CalendarFrame() {
         super("Plan4Life - Scheduler");
 
@@ -218,10 +215,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
                 calendarPanel.colorBlockedRange(
-                        block.getStart(),
-                        block.getEnd(),
-                        block.getColumnIndex(),
-                        block.getDescription()
+                        block
                 );
             }
         }
@@ -235,9 +229,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 "Optional description for this blocked time:");
 
         if (description == null) {
-            return; // user pressed Cancel
+            calendarPanel.resetDragSelection();
+            return; // user pressed cancel
         }
 
         blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+
+//        for (BlockedTime bt : currentSchedule.getBlockedTimes()) {
+//            System.out.println("Blocked time: " + bt.getStart() + " - " + bt.getEnd() + " on day " + bt.getColumnIndex() + " - " + bt.getDescription());
+//        }
     }
 }

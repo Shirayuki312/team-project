@@ -31,8 +31,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private SettingsController settingsController;
     private SetPreferencesInputBoundary settingsInteractor; // <--- 2. 添加 Interactor 字段
 
-
-    // --- 3. 默认构造函数 (为了兼容性，但建议使用下面的带参数构造函数) ---
     public CalendarFrame() {
         this((SetPreferencesInputBoundary) null); // 正确：指定类型
     }
@@ -167,9 +165,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
                 calendarPanel.colorBlockedRange(
-                        block.getStart(),
-                        block.getEnd(),
-                        block.getColumnIndex()
+                        block
                 );
             }
         }
@@ -182,10 +178,15 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 "Optional description for this blocked time:");
 
         if (description == null) {
-            return;
+            calendarPanel.resetDragSelection();
+            return; // user pressed cancel
         }
         if (blockOffTimeController != null) {
             blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
         }
+
+//        for (BlockedTime bt : currentSchedule.getBlockedTimes()) {
+//            System.out.println("Blocked time: " + bt.getStart() + " - " + bt.getEnd() + " on day " + bt.getColumnIndex() + " - " + bt.getDescription());
+//        }
     }
 }

@@ -1,6 +1,7 @@
 package plan4life.entities;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class BlockedTime {
     private final LocalDateTime start;
@@ -11,8 +12,12 @@ public class BlockedTime {
     public BlockedTime(LocalDateTime start, LocalDateTime end, String description, int columnIndex) {
         this.start = start;
         this.end = end;
-        this.description = description;
         this.columnIndex = columnIndex;
+        if (Objects.equals(description, "")) {
+            this.description = "Blocked";
+        } else {
+            this.description = description;
+        }
     }
 
     public LocalDateTime getStart() { return start; }

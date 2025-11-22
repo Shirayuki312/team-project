@@ -16,6 +16,7 @@ public class CalendarPanel extends JPanel {
     private int endRow = -1;
     private int column = -1;
     private boolean dragging = false;
+    private boolean[][] isBlocked;
 
     private TimeSelectionListener listener;
 
@@ -27,6 +28,7 @@ public class CalendarPanel extends JPanel {
     private void buildGrid(int columns) {
         removeAll();
         currentColumns = columns;
+        isBlocked = new boolean[24][columns];
         int rows = 24;
 
         // Each component added to a GridLayout fills the next cell in the grid (left to right, then top to bottom)
@@ -138,7 +140,13 @@ public class CalendarPanel extends JPanel {
     private void updateSelection() {
         for (int r = 0; r < 24; r++) {
             for (int c = 0; c < currentColumns; c++) {
-                cells[r][c].setBackground(Color.WHITE);
+                if (isBlocked[r][c]) {
+                    renderBlockedCell(r, c);
+                }
+                else {
+                    cells[r][c].setBackground(Color.WHITE);
+                    cells[r][c].removeAll();
+                }
             }
         }
 
@@ -146,7 +154,12 @@ public class CalendarPanel extends JPanel {
             int min = Math.min(startRow, endRow);
             int max = Math.max(startRow, endRow);
             for (int r = min; r <= max; r++) {
-                cells[r][column].setBackground(new Color(173, 216, 230)); // light blue
+                if (isBlocked[r][column]) {
+                    cells[r][column].setBackground(new Color(230, 173, 187));
+                }
+                else {
+                    cells[r][column].setBackground(new Color(173, 216, 230));
+                }
             }
         }
     }
@@ -209,11 +222,21 @@ public class CalendarPanel extends JPanel {
         }
 
         for (int r = min; r <= max; r++) {
-            cells[r][columnIndex].setBackground(Color.GRAY);
-            cells[r][columnIndex].removeAll();
-            cells[r][columnIndex].add(new JLabel("Blocked"));
+            isBlocked[r][columnIndex] = true;
+            renderBlockedCell(r, columnIndex);
+//            cells[r][columnIndex].setBackground(Color.GRAY);
+//            cells[r][columnIndex].removeAll();
+//            cells[r][columnIndex].add(new JLabel("Blocked"));
         }
     }
+
+    private void renderBlockedCell(int r, int c) {
+        JPanel cell = cells[r][c];
+        cell.setBackground(Color.GRAY);
+        cell.removeAll();
+        cell.add(new JLabel("Blocked"));
+    }
+
     // new listener interface inside or external:
     public interface LockListener {
         void onLockToggle(String timeKey);

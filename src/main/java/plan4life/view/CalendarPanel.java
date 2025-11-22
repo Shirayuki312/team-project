@@ -210,7 +210,7 @@ public class CalendarPanel extends JPanel {
     }
 
 
-    public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int columnIndex) {
+    public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int columnIndex, String description) {
         int startHour = start.getHour();
         int endHour = end.getHour();
 
@@ -223,10 +223,19 @@ public class CalendarPanel extends JPanel {
 
         for (int r = min; r <= max; r++) {
             isBlocked[r][columnIndex] = true;
-            renderBlockedCell(r, columnIndex);
-//            cells[r][columnIndex].setBackground(Color.GRAY);
-//            cells[r][columnIndex].removeAll();
-//            cells[r][columnIndex].add(new JLabel("Blocked"));
+
+            JPanel cell = cells[r][columnIndex];
+            cell.setBackground(Color.GRAY);
+            cell.removeAll();
+
+            if (r == min) {
+                JLabel label = new JLabel(description, SwingConstants.CENTER);
+                cell.setLayout(new BorderLayout());
+                cell.add(label, BorderLayout.CENTER);
+            }
+
+            cell.revalidate();
+            cell.repaint();
         }
     }
 
@@ -234,7 +243,6 @@ public class CalendarPanel extends JPanel {
         JPanel cell = cells[r][c];
         cell.setBackground(Color.GRAY);
         cell.removeAll();
-        cell.add(new JLabel("Blocked"));
     }
 
     // new listener interface inside or external:

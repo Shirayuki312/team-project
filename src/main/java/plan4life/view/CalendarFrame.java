@@ -220,7 +220,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 calendarPanel.colorBlockedRange(
                         block.getStart(),
                         block.getEnd(),
-                        block.getColumnIndex()
+                        block.getColumnIndex(),
+                        block.getDescription()
                 );
             }
         }

@@ -63,9 +63,7 @@ public class CalendarPanel extends JPanel {
                     int max = Math.max(startRow, endRow);
                     LocalDateTime now = LocalDateTime.now();
 
-                    if (listener == null) {
-                        return;
-                    }
+                    if (listener == null) return;
 
                     // TODO: Using today's date as a placeholder. Replace with actual selected calendar date once implemented.
                     LocalDateTime start = now
@@ -74,10 +72,10 @@ public class CalendarPanel extends JPanel {
                             .withSecond(0)
                             .withNano(0);
                     LocalDateTime end = now
-                            .withHour(max + 1)
-                            .withMinute(0)
-                            .withSecond(0)
-                            .withNano(0);
+                            .withHour(max)
+                            .withMinute(59)
+                            .withSecond(59)
+                            .withNano(999_999_999);
 
                     int scheduleId = (currentColumns == 1) ? 1 : 2;
                     listener.onTimeSelected(start, end, scheduleId, column);
@@ -204,7 +202,7 @@ public class CalendarPanel extends JPanel {
         int endHour = end.getHour();
 
         int min = Math.max(0, startHour);
-        int max = Math.min(23, endHour - 1);
+        int max = Math.min(23, endHour);
 
         if (columnIndex < 0 || columnIndex >= currentColumns) {
             return;

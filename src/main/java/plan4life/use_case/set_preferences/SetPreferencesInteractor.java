@@ -1,50 +1,42 @@
 package plan4life.use_case.set_preferences;
 
-/**
- * The Interactor for the Set Preferences use case.
- * This class contains the core business logic.
- */
+import plan4life.data_access.UserPreferencesDataAccessInterface;
+import plan4life.entities.UserPreferences;
+
 public class SetPreferencesInteractor implements SetPreferencesInputBoundary {
 
-    // (Interactor 需要一个 OutputBoundary (Presenter) 来返回数据)
     final SetPreferencesOutputBoundary presenter;
+    final UserPreferencesDataAccessInterface dataAccess;
 
-    // (Interactor 还需要一个 DAO (Data Access) 来*保存*数据)
-    // final SetPreferencesDataAccessInterface dataAccess;
-
-
-    // (构造函数)
-    public SetPreferencesInteractor(SetPreferencesOutputBoundary presenter /*, SetPreferencesDataAccessInterface dataAccess*/) {
+    public SetPreferencesInteractor(SetPreferencesOutputBoundary presenter,
+                                    UserPreferencesDataAccessInterface dataAccess) {
         this.presenter = presenter;
-        // this.dataAccess = dataAccess;
+        this.dataAccess = dataAccess;
     }
 
-
-    /**
-     * The main execute method called by the Controller.
-     */
     @Override
     public void execute(SetPreferencesRequestModel requestModel) {
-        // (这是你实现“设置”功能的占位符逻辑)
-
         try {
-            // 1. (未来) 从 requestModel 获取数据
-            // String theme = requestModel.getTheme();
+            // 1. 创建实体
+            UserPreferences preferences = new UserPreferences(
+                    requestModel.getTheme(),
+                    requestModel.getLanguage(),
+                    requestModel.getDefaultReminderMinutes(),
+                    requestModel.getTimeZoneId()
+            );
 
-            // 2. (未来) 调用 Data Access Object (DAO) 来保存数据
-            // dataAccess.saveTheme(theme);
+            // 2. 保存数据
+            dataAccess.save(preferences);
 
-            // 3. (未来) 创建一个 Response Model
-            // SetPreferencesResponseModel responseModel = new SetPreferencesResponseModel("Settings saved!");
-
-            // 4. (未来) 调用 Presenter (Output Boundary)
-            // presenter.prepareSuccessView(responseModel);
-
-            System.out.println("Use Case 'SetPreferences' executed (Placeholder).");
+            // 3. 告诉 Presenter 成功了
+            // (这里可以创建一个 ResponseModel，但为了简单我们直接传字符串或 null)
+            // 假设你的 OutputBoundary 定义了 prepareSuccessView 需要参数，这里简化处理：
+            // 你需要去 SetPreferencesOutputBoundary.java 确认方法签名。
+            // 假设我们不需要回传复杂数据：
+            presenter.prepareSuccessView(null);
 
         } catch (Exception e) {
-            // (如果出错，调用 Presenter 的失败方法)
-            // presenter.prepareFailView(e.getMessage());
+            presenter.prepareFailView(e.getMessage());
         }
     }
 }

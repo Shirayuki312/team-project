@@ -10,6 +10,12 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
 import plan4life.view.CalendarFrame;
 import plan4life.use_case.lock_activity.*;
+import plan4life.data_access.InMemoryUserPreferencesDAO;
+import plan4life.data_access.UserPreferencesDataAccessInterface;
+import plan4life.presenter.SettingsPresenter;
+import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
+import plan4life.use_case.set_preferences.SetPreferencesInteractor;
+import plan4life.use_case.set_preferences.SetPreferencesOutputBoundary;
 
 import javax.swing.*;
 
@@ -22,7 +28,22 @@ public class Main {
             scheduleDAO.saveSchedule(daySchedule);
             scheduleDAO.saveSchedule(weekSchedule);
 
-            CalendarFrame view = new CalendarFrame(); // temp
+            UserPreferencesDataAccessInterface userPrefsDAO = new InMemoryUserPreferencesDAO();
+
+            // B. 创建 Presenter (负责显示成功/失败弹窗)
+            SetPreferencesOutputBoundary settingsPresenter = new SettingsPresenter();
+
+            // C. 创建 Interactor (核心逻辑，连接 DAO 和 Presenter)
+            SetPreferencesInputBoundary settingsInteractor = new SetPreferencesInteractor(settingsPresenter, userPrefsDAO);
+
+
+            // ==========================================
+            // 3. [修改] 创建 View (CalendarFrame)
+            // ==========================================
+            // 注意：我们这里把 settingsInteractor 传进去了！
+            // (这就要求你必须修改 CalendarFrame 的构造函数，见下文提示)
+            CalendarFrame view = new CalendarFrame(settingsInteractor);
+
             BlockOffTimeOutputBoundary presenter = new CalendarPresenter(view);
             BlockOffTimeInputBoundary interactor = new BlockOffTimeInteractor(scheduleDAO, presenter);
             BlockOffTimeController controller = new BlockOffTimeController(interactor);

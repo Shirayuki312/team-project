@@ -1,48 +1,60 @@
-// 文件路径: src/main/java/plan4life/view/CalendarFrame.java
 package plan4life.view;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import plan4life.controller.CalendarController; // imported controller
+import plan4life.controller.CalendarController;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
+import plan4life.use_case.set_preferences.SetPreferencesInputBoundary; // <--- 1. 导入 InputBoundary
 
 import java.time.LocalDateTime;
-import java.util.Random; //Temp till we get langchain/langgraph working
+import java.util.Random;
 
-// --- 1. IMPORT SETTINGS CLASSES ---
+// Settings Classes
 import plan4life.controller.SettingsController;
-import java.awt.event.ActionListener;
-// (ActionEvent is already imported by your teammate)
 
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
+
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
-    private BlockOffTimeController blockOffTimeController;
-    private Schedule currentSchedule;
-    private CalendarController calendarController; // added controller
 
-    // --- 2. ADD SETTINGS MEMBER VARIABLES ---
+    // Controllers for other features
+    private BlockOffTimeController blockOffTimeController;
+    private CalendarController calendarController;
+
+    // --- Settings Variables ---
     private SettingsView settingsView;
     private SettingsController settingsController;
+    private SetPreferencesInputBoundary settingsInteractor; // <--- 2. 添加 Interactor 字段
 
 
+    // --- 3. 默认构造函数 (为了兼容性，但建议使用下面的带参数构造函数) ---
     public CalendarFrame() {
+        this((SetPreferencesInputBoundary) null); // 正确：指定类型
+    }
+
+    // --- 4. [核心修改] 带 Interactor 的构造函数 ---
+    // Main.java 会调用这个构造函数
+    public CalendarFrame(SetPreferencesInputBoundary settingsInteractor) {
         super("Plan4Life - Scheduler");
 
-        // --- 3. INITIALIZE SETTINGS CLASSES (at the top) ---
-        // (This MUST be done before they are used)
+        // 保存 Interactor
+        this.settingsInteractor = settingsInteractor;
+
+        // --- 初始化 Settings 组件 ---
+        // 关键点：我们将 Interactor 传给了 Controller
         this.settingsView = new SettingsView(this);
-        this.settingsController = new SettingsController(this.settingsView);
+        this.settingsController = new SettingsController(this.settingsView, this.settingsInteractor);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 750);
         setLayout(new BorderLayout(10, 10));
 
-        // <--- Top part with Day/Week and Generate Schedule buttons --->
+        // <--- Top part with Day/Week/Generate/Settings buttons --->
         JPanel topBar = new JPanel(new BorderLayout());
 
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -54,11 +66,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton generateBtn = new JButton("Generate Schedule");
 
-        // --- 4. ADD SETTINGS BUTTON TO THE UI ---
+        // 添加 Settings 按钮
         JButton settingsBtn = new JButton("Settings");
 
         rightPanel.add(generateBtn);
-        rightPanel.add(settingsBtn); // Add the button to the panel
+        rightPanel.add(settingsBtn);
 
         topBar.add(leftPanel, BorderLayout.WEST);
         topBar.add(rightPanel, BorderLayout.EAST);
@@ -67,23 +79,16 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.calendarPanel = new CalendarPanel();
         calendarPanel.setTimeSelectionListener(this);
 
+        // 设置锁定监听器 (你队友的逻辑)
         calendarPanel.setLockListener(timeKey -> {
             if (currentSchedule == null) return;
 
-            // Toggle lock state
             if (currentSchedule.isLockedKey(timeKey)) {
                 currentSchedule.unlockSlotKey(timeKey);
             } else {
                 currentSchedule.lockSlotKey(timeKey);
             }
 
-            // Call your controller (must exist in the Frame)
-            if (blockOffTimeController != null) {
-                // If your controller regenerates based on block-offs,
-                // call it here (optional depending on final design)
-            }
-
-            // Call your schedule-locking controller
             if (this.calendarController != null) {
                 calendarController.lockAndRegenerate(
                         currentSchedule.getScheduleId(),
@@ -111,21 +116,22 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             displaySchedule(currentSchedule);
         });
 
-        // --- 5. ADD SETTINGS BUTTON LOGIC ---
+        // Settings 按钮逻辑
         settingsBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // When the button is clicked, show the SettingsView dialog
                 settingsView.setVisible(true);
             }
         });
     }
 
+    // --- 用于 BlockOffTimeController 的辅助构造函数 (你队友的旧逻辑) ---
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {
-        this();
+        this((SetPreferencesInputBoundary) null); // 正确
         this.blockOffTimeController = blockOffTimeController;
     }
 
+    // --- Setters ---
     public void setBlockOffTimeController(BlockOffTimeController controller) {
         this.blockOffTimeController = controller;
     }
@@ -134,6 +140,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.calendarController = controller;
     }
 
+    // --- View Interface Methods ---
+    private Schedule currentSchedule;
 
     @Override
     public void showMessage(String message) {
@@ -145,11 +153,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.currentSchedule = schedule;
         if (schedule == null) return;
 
-        // This is where you’ll color each entry in the schedule
-        // For now, until Activities exist, let’s simulate visually:
         calendarPanel.clear();
-
-        Random random = new Random(); //Temp till we get langchain/langgraph working
+        Random random = new Random();
 
         schedule.getActivities().forEach((time, activityName) -> {
             boolean isLocked = currentSchedule.isLockedKey(time);
@@ -168,7 +173,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 );
             }
         }
-
         calendarPanel.repaint();
     }
 
@@ -178,9 +182,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 "Optional description for this blocked time:");
 
         if (description == null) {
-            return; // user pressed Cancel
+            return;
         }
-
-        blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        if (blockOffTimeController != null) {
+            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        }
     }
 }

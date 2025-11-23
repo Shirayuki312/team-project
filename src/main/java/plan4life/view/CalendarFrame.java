@@ -4,20 +4,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-import plan4life.controller.CalendarController; // imported controller
+import plan4life.controller.CalendarController;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 
 import java.time.LocalDateTime;
-import java.util.Random; //Temp till we get langchain/langgraph working
+import java.util.Random;
 
+/**
+ * Main application frame that shows the calendar and activities.
+ * It also reacts to time selections (for blocking time) and
+ * integrates with the reminder feature (Use Case 7).
+ */
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
     private BlockOffTimeController blockOffTimeController;
     private Schedule currentSchedule;
-    private CalendarController calendarController; // added controller
+    private CalendarController calendarController; // controller used for reminders & locking
 
     public CalendarFrame() {
         super("Plan4Life - Scheduler");
@@ -26,7 +31,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         setSize(1200, 750);
         setLayout(new BorderLayout(10, 10));
 
-        // <--- Top part with Day/Week and Generate Schedule buttons --->
         JPanel topBar = new JPanel(new BorderLayout());
 
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -42,27 +46,20 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         topBar.add(leftPanel, BorderLayout.WEST);
         topBar.add(rightPanel, BorderLayout.EAST);
 
-        // <--- Calendar Panel --->
         this.calendarPanel = new CalendarPanel();
         calendarPanel.setTimeSelectionListener(this);
 
         calendarPanel.setLockListener(timeKey -> {
             if (currentSchedule == null) return;
 
-            // Toggle lock state
+
             if (currentSchedule.isLockedKey(timeKey)) {
                 currentSchedule.unlockSlotKey(timeKey);
             } else {
                 currentSchedule.lockSlotKey(timeKey);
             }
 
-            // Call your controller (must exist in the Frame)
-            if (blockOffTimeController != null) {
-                // If your controller regenerates based on block-offs,
-                // call it here (optional depending on final design)
-            }
 
-            // Call your schedule-locking controller
             if (this.calendarController != null) {
                 calendarController.lockAndRegenerate(
                         currentSchedule.getScheduleId(),
@@ -71,15 +68,12 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             }
         });
 
-        // <--- Activities Panel --->
         this.activityPanel = new ActivityPanel();
 
-        // --- Add to frame ---
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
 
-        // --- Button Logic ---
         dayBtn.addActionListener(e -> {
             calendarPanel.setDayView();
             displaySchedule(currentSchedule);
@@ -100,6 +94,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.blockOffTimeController = controller;
     }
 
+    /**
+     * Injects the CalendarController so this frame can:
+     *  - lock & regenerate schedules
+     *  - register events and open the reminder dialog
+     */
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
     }
@@ -115,11 +114,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.currentSchedule = schedule;
         if (schedule == null) return;
 
-        // This is where you’ll color each entry in the schedule
-        // For now, until Activities exist, let’s simulate visually:
+
         calendarPanel.clear();
 
-        Random random = new Random(); //Temp till we get langchain/langgraph working
+        Random random = new Random();
+
 
         schedule.getActivities().forEach((time, activityName) -> {
             boolean isLocked = currentSchedule.isLockedKey(time);
@@ -142,15 +141,40 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         calendarPanel.repaint();
     }
 
+    /**
+     * Called when the user selects a time range on the calendar.
+     * We use this both to:
+     *  - block off time (original behavior), and
+     *  - create an Event and open the reminder dialog (Use Case 7).
+     */
     @Override
-    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
+    public void onTimeSelected(LocalDateTime start, LocalDateTime end,
+                               int scheduleId, int columnIndex) {
         String description = JOptionPane.showInputDialog(this,
                 "Optional description for this blocked time:");
 
         if (description == null) {
-            return; // user pressed Cancel
+
+            return;
         }
 
-        blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        if (calendarController != null) {
+            String title = description.isBlank()
+                    ? "Activity"
+                    : description;
+
+            Event event = new Event(title, start, end);
+
+            calendarController.registerEvent(event);
+
+            ReminderDialog dialog =
+                    new ReminderDialog(this, calendarController, event, true);
+            dialog.setVisible(true);
+        }
+
+        if (blockOffTimeController != null) {
+            blockOffTimeController.blockTime(
+                    scheduleId, start, end, description, columnIndex);
+        }
     }
 }

@@ -70,6 +70,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
         // 1. Dependency Injection: Save the interactor
         this.settingsInteractor = settingsInteractor;
+    public CalendarFrame() {
+        super("Plan4Life - Scheduler");
 
         // 2. Initialize Settings Components
         // We pass 'this' (CalendarFrame) as the parent window for the dialog
@@ -273,9 +275,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
                 calendarPanel.colorBlockedRange(
-                        block.getStart(),
-                        block.getEnd(),
-                        block.getColumnIndex()
+                        block
                 );
             }
         }

@@ -1,14 +1,15 @@
 package plan4life.use_case.set_preferences;
 
-// (这个类携带要显示给用户的数据, 比如一个“成功”消息)
 public class SetPreferencesResponseModel {
 
-    // (占位符 - 也许我们只需要一个消息)
-    private String successMessage;
+    private final String theme;
+    private final String language;
 
-    // public SetPreferencesResponseModel(String successMessage) {
-    //     this.successMessage = successMessage;
-    // }
+    public SetPreferencesResponseModel(String theme, String language) {
+        this.theme = theme;
+        this.language = language;
+    }
 
-    // public String getSuccessMessage() { return successMessage; }
+    public String getTheme() { return theme; }
+    public String getLanguage() { return language; }
 }

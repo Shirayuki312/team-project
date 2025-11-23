@@ -1,10 +1,10 @@
 package plan4life.use_case.set_preferences;
 
 public class SetPreferencesRequestModel {
-    private String theme;
-    private String language;
-    private int defaultReminderMinutes;
-    private String timeZoneId;
+    private final String theme;
+    private final String language;
+    private final int defaultReminderMinutes;
+    private final String timeZoneId;
 
     public SetPreferencesRequestModel(String theme, String language, int defaultReminderMinutes, String timeZoneId) {
         this.theme = theme;

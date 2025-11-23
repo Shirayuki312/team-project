@@ -12,7 +12,6 @@ public class InMemoryUserPreferencesDAO implements UserPreferencesDataAccessInte
 
     @Override
     public UserPreferences load() {
-        // 如果还没保存过，返回默认值
         if (this.preferences == null) {
             return new UserPreferences("Light Mode", "English", 15, "America/Toronto");
         }

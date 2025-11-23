@@ -27,15 +27,13 @@ public class CalendarPanel extends JPanel {
         revalidate();
     }
 
-    // --- [修复报错] 添加变色逻辑 ---
     public void setTheme(String themeName) {
         boolean isDark = "Dark Mode".equals(themeName);
 
-        // 设置颜色
+        // set color
         Color bgColor = isDark ? Color.DARK_GRAY : Color.WHITE;
         Color gridColor = isDark ? Color.GRAY : Color.LIGHT_GRAY;
 
-        // 遍历格子修改颜色
         if (cells != null) {
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < currentColumns; c++) {

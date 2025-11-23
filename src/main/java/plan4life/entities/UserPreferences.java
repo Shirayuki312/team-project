@@ -1,7 +1,6 @@
 package plan4life.entities;
 
 public class UserPreferences {
-    // 我们要保存的4个设置
     private final String theme;
     private final String language;
     private final int defaultReminderMinutes;

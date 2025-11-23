@@ -31,29 +31,25 @@ public class SettingsController {
     }
 
     private void saveSettings() {
-        // 1. 从 View 获取数据
         String theme = settingsView.getLightModeRadio().isSelected() ? "Light Mode" : "Dark Mode";
         String language = (String) settingsView.getLanguageCombo().getSelectedItem();
         String timeZone = (String) settingsView.getTimezoneCombo().getSelectedItem();
 
-        // 解析提醒时间 (简单处理字符串)
+        // time
         String reminderStr = (String) settingsView.getReminderCombo().getSelectedItem();
-        int reminderMinutes = 15; // 默认
+        int reminderMinutes = 15;
         if (reminderStr != null) {
             if (reminderStr.contains("30")) reminderMinutes = 30;
             if (reminderStr.contains("1 hour")) reminderMinutes = 60;
         }
 
-        // 2. 创建 RequestModel
-        // (之前报错就是因为这行代码找不到 SetPreferencesRequestModel 类)
         SetPreferencesRequestModel request = new SetPreferencesRequestModel(
                 theme, language, reminderMinutes, timeZone
         );
 
-        // 3. 调用 Use Case
+        // 3.Use Case
         interactor.execute(request);
 
-        // 4. 关闭窗口
         settingsView.dispose();
     }
 }

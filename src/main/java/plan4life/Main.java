@@ -46,23 +46,22 @@ public class Main {
             scheduleDAO.saveSchedule(daySchedule);
             scheduleDAO.saveSchedule(weekSchedule);
 
-            // 2. Settings 后端组件 (DAO, Presenter, Interactor)
+            // 2. Settings (DAO, Presenter, Interactor)
             UserPreferencesDataAccessInterface userPrefsDAO = new InMemoryUserPreferencesDAO();
             SettingsPresenter settingsPresenter = new SettingsPresenter(); // 必须是具体的 SettingsPresenter 类
             SetPreferencesInputBoundary settingsInteractor = new SetPreferencesInteractor(settingsPresenter, userPrefsDAO);
 
-            // 3. 创建 View (注入 settingsInteractor)
+            // 3. create View
             CalendarFrame view = new CalendarFrame(settingsInteractor);
 
-            // [关键] 把 View 塞回给 SettingsPresenter (为了变色和改语言)
             settingsPresenter.setView(view);
 
-            // 4. BlockOffTime 组件
+            // 4. BlockOffTime
             BlockOffTimeOutputBoundary presenter = new CalendarPresenter(view);
             BlockOffTimeInputBoundary interactor = new BlockOffTimeInteractor(scheduleDAO, presenter);
             BlockOffTimeController controller = new BlockOffTimeController(interactor);
 
-            // 5. GenerateSchedule & LockActivity 组件
+            // 5. GenerateSchedule & LockActivity
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
             GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(schedulePresenter);
 
@@ -70,7 +69,6 @@ public class Main {
             LockActivityInputBoundary lock_interactor = new LockActivityInteractor(lock_presenter, scheduleDAO);
             CalendarController calendarController = new CalendarController(scheduleInput, lock_interactor);
 
-            // 6. 设置 View 的控制器
             view.setCalendarController(calendarController);
             view.setBlockOffTimeController(controller);
 

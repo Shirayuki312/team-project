@@ -1,23 +1,30 @@
-// 文件路径: src/main/java/plan4life/view/CalendarFrame.java
 package plan4life.view;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import plan4life.controller.CalendarController; // imported controller
+import plan4life.controller.CalendarController;           // calendar & reminder controller
+import plan4life.controller.SettingsController;           // settings controller
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 
+
 import java.time.LocalDateTime;
-import java.util.Random; //Temp till we get langchain/langgraph working
+import java.util.Random; // Temp till we get langchain/langgraph working
 
 // --- 1. IMPORT SETTINGS CLASSES ---
 import plan4life.controller.SettingsController;
 import java.awt.event.ActionListener;
 // (ActionEvent is already imported by your teammate)
 
+/**
+ * Main application frame that shows the calendar and activities.
+ * It also reacts to time selections (for blocking time) and
+ * integrates with the reminder feature (Use Case 7).
+ */
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
@@ -129,6 +136,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.blockOffTimeController = controller;
     }
 
+    /**
+     * Injects the CalendarController so this frame can:
+     *  - lock & regenerate schedules
+     *  - register events and open the reminder dialog
+     */
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
     }
@@ -169,20 +181,54 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         calendarPanel.repaint();
     }
 
+    /**
+     * Called when the user selects a time range on the calendar.
+     * We use this both to:
+     *  - block off time (original behavior), and
+     *  - create an Event and open the reminder dialog (Use Case 7).
+     */
     @Override
-    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
-        String description = JOptionPane.showInputDialog(this,
-                "Optional description for this blocked time:");
+    public void onTimeSelected(LocalDateTime start,
+                               LocalDateTime end,
+                               int scheduleId,
+                               int columnIndex) {
+        String description = JOptionPane.showInputDialog(
+                this,
+                "Optional description for this blocked time:"
+        );
 
         if (description == null) {
+            // user pressed Cancel: clear the dragged highlight and exit
             calendarPanel.resetDragSelection();
-            return; // user pressed cancel
+            return;
         }
 
-        blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        // ---------- Reminder flow (Use Case 7) ----------
+        if (calendarController != null) {
+            // Use the description as the event title (fallback to "Activity")
+            String title = description.isBlank() ? "Activity" : description;
 
-//        for (BlockedTime bt : currentSchedule.getBlockedTimes()) {
-//            System.out.println("Blocked time: " + bt.getStart() + " - " + bt.getEnd() + " on day " + bt.getColumnIndex() + " - " + bt.getDescription());
-//        }
+            // Create an Event for this time range
+            Event event = new Event(title, start, end);
+
+            // 1) Let the controller know this event exists
+            calendarController.registerEvent(event);
+
+            // 2) Open the ReminderDialog; when user clicks OK,
+            //    ReminderDialog.onOk() will call:
+            //    - setImportantReminderForEvent(...)
+            //    - or setImportantReminderForAllEvents(...)
+            ReminderDialog dialog =
+                    new ReminderDialog(this, calendarController, event, true);
+            dialog.setVisible(true);
+        }
+
+        // ---------- Original block-off-time behavior ----------
+        if (blockOffTimeController != null) {
+            blockOffTimeController.blockTime(
+                    scheduleId, start, end, description, columnIndex
+            );
+        }
     }
 }
+

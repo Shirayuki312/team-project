@@ -11,6 +11,18 @@ import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
 import plan4life.view.CalendarFrame;
 import plan4life.use_case.lock_activity.*;
 
+import plan4life.controller.CalendarController;
+import plan4life.view.CalendarFrame;
+
+import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
+import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
+import plan4life.use_case.lock_activity.LockActivityInputBoundary;
+import plan4life.use_case.lock_activity.LockActivityRequestModel;
+
+import javax.swing.SwingUtilities;
+
+import java.time.LocalDateTime;
+
 import javax.swing.*;
 
 public class Main {
@@ -22,7 +34,7 @@ public class Main {
             scheduleDAO.saveSchedule(daySchedule);
             scheduleDAO.saveSchedule(weekSchedule);
 
-            CalendarFrame view = new CalendarFrame(); // temp
+            CalendarFrame view = new CalendarFrame();
             BlockOffTimeOutputBoundary presenter = new CalendarPresenter(view);
             BlockOffTimeInputBoundary interactor = new BlockOffTimeInteractor(scheduleDAO, presenter);
             BlockOffTimeController controller = new BlockOffTimeController(interactor);
@@ -39,6 +51,28 @@ public class Main {
             view.setCalendarController(calendarController);
             view.setBlockOffTimeController(controller);
             view.setVisible(true);
+        });
+
+        GenerateScheduleInputBoundary dummyGenerate = new GenerateScheduleInputBoundary() {
+            @Override
+            public void execute(GenerateScheduleRequestModel requestModel) {
+                System.out.println("[DummyGenerate] generateSchedule called.");
+            }
+        };
+
+        LockActivityInputBoundary dummyLock = new LockActivityInputBoundary() {
+            @Override
+            public void execute(LockActivityRequestModel requestModel) {
+                System.out.println("[DummyLock] lockAndRegenerate called.");
+            }
+        };
+
+        CalendarController controller = new CalendarController(dummyGenerate, dummyLock);
+
+        SwingUtilities.invokeLater(() -> {
+            CalendarFrame frame = new CalendarFrame();
+            frame.setCalendarController(controller);
+            frame.setVisible(true);
         });
     }
 }

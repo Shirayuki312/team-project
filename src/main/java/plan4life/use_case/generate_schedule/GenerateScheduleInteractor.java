@@ -1,22 +1,42 @@
 package plan4life.use_case.generate_schedule;
 
 import plan4life.entities.Schedule;
+import java.util.Map;
+import java.util.Objects;
 
+/**
+ * Interactor coordinates generation of Schedule using an injected ScheduleGenerationService.
+ * This keeps the LLM / RAG integration behind an interface (clean architecture).
+ */
 public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary {
     private final GenerateScheduleOutputBoundary presenter;
+    private final ScheduleGenerationService generationService;
 
-    public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter) {
-        this.presenter = presenter;
+    /**
+     * @param presenter the output boundary (presenter)
+     * @param generationService service responsible for producing Schedule from input (mock or real LLM)
+     */
+    public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter,
+                                      ScheduleGenerationService generationService) {
+        this.presenter = Objects.requireNonNull(presenter, "presenter must not be null");
+        this.generationService = Objects.requireNonNull(generationService, "generationService must not be null");
     }
 
     @Override
     public void execute(GenerateScheduleRequestModel requestModel) {
-        // Core logic: generate schedule using mock or RAG logic
-        Schedule schedule = new Schedule();
-        schedule.populateRandomly();
+        // Validate input
+        if (requestModel == null) {
+            presenter.present(new GenerateScheduleResponseModel(new Schedule()));
+            return;
+        }
 
-        GenerateScheduleResponseModel response = new GenerateScheduleResponseModel(schedule);
-        presenter.present(response);
+        String description = requestModel.getRoutineDescription();
+        Map<String, String> fixed = requestModel.getFixedActivities();
+
+        // Delegate to the generation service (mock or LLM-backed).
+        Schedule schedule = generationService.generate(description, fixed);
+
+        // Present schedule to output boundary
+        presenter.present(new GenerateScheduleResponseModel(schedule));
     }
 }
-

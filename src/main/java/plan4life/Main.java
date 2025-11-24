@@ -2,7 +2,7 @@ package plan4life;
 
 import javax.swing.SwingUtilities;
 
-// 核心架构 Imports
+// Core Architecture Imports
 import plan4life.data_access.InMemoryScheduleDAO;
 import plan4life.data_access.ScheduleDataAccessInterface;
 import plan4life.data_access.InMemoryUserPreferencesDAO;
@@ -33,7 +33,7 @@ import plan4life.use_case.set_preferences.SetPreferencesInteractor;
 import plan4life.use_case.set_preferences.SetPreferencesOutputBoundary;
 
 // View & Controllers
-import plan4life.view.CalendarFrame; // <--- 关键！必须有这一行
+import plan4life.view.CalendarFrame; // <--- Critical! This line is required
 import plan4life.controller.CalendarController;
 
 public class Main {
@@ -48,10 +48,10 @@ public class Main {
 
             // 2. Settings (DAO, Presenter, Interactor)
             UserPreferencesDataAccessInterface userPrefsDAO = new InMemoryUserPreferencesDAO();
-            SettingsPresenter settingsPresenter = new SettingsPresenter(); // 必须是具体的 SettingsPresenter 类
+            SettingsPresenter settingsPresenter = new SettingsPresenter(); // Must be the concrete SettingsPresenter class
             SetPreferencesInputBoundary settingsInteractor = new SetPreferencesInteractor(settingsPresenter, userPrefsDAO);
 
-            // 3. create View
+            // 3. Create View
             CalendarFrame view = new CalendarFrame(settingsInteractor);
 
             settingsPresenter.setView(view);

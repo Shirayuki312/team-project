@@ -60,6 +60,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton generateBtn = new JButton("Generate Schedule");
 
+        // generateBtn.addActionListener(e -> {
+            // if (calendarController != null) {
+                // calendarController.generateSchedule();
+                // Will update with arguments. Should take inputs and map of all activities
+            // }
+       // });
+
+
         // --- 4. ADD SETTINGS BUTTON TO THE UI ---
         JButton settingsBtn = new JButton("Settings");
 

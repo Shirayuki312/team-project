@@ -8,6 +8,10 @@ import plan4life.use_case.block_off_time.*;
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
+import plan4life.use_case.generate_schedule.ScheduleGenerationService;
+import plan4life.use_case.generate_schedule.MockScheduleGenerationService;
+// Mock Schedule Generator temp till fully implemented LLM.
+
 import plan4life.view.CalendarFrame;
 import plan4life.use_case.lock_activity.*;
 
@@ -40,13 +44,9 @@ public class Main {
             BlockOffTimeController controller = new BlockOffTimeController(interactor);
 
 
-            // Added GenerateSchedule and LockActivity to main. GenerateSchedule still needs work, needs to take 1 more input
-            GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
-            GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(schedulePresenter);
-
-            LockActivityOutputBoundary lock_presenter = new CalendarPresenter(view);
-            LockActivityInputBoundary lock_interactor = new LockActivityInteractor(lock_presenter, scheduleDAO);
-            CalendarController calendarController = new CalendarController(scheduleInput, lock_interactor);
+            // Added GenerateSchedule and LockActivity to main.
+            // GenerateSchedule still needs work, needs to take 1 more input.
+            CalendarController calendarController = getCalendarController(view, scheduleDAO);
 
             view.setCalendarController(calendarController);
             view.setBlockOffTimeController(controller);
@@ -74,5 +74,21 @@ public class Main {
             frame.setCalendarController(controller);
             frame.setVisible(true);
         });
+    }
+}
+
+    private static CalendarController
+    getCalendarController(CalendarFrame view, ScheduleDataAccessInterface scheduleDAO) {
+        GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
+
+        // mock schedule generator here
+        ScheduleGenerationService generationService = new MockScheduleGenerationService();
+
+        GenerateScheduleInputBoundary scheduleInput =
+                new GenerateScheduleInteractor(schedulePresenter, generationService);
+
+        LockActivityOutputBoundary lockPresenter = new CalendarPresenter(view);
+        LockActivityInputBoundary lockInteractor = new LockActivityInteractor(lockPresenter, scheduleDAO);
+        return new CalendarController(scheduleInput, lockInteractor);
     }
 }

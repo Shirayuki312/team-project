@@ -34,7 +34,7 @@ public class Main {
             scheduleDAO.saveSchedule(daySchedule);
             scheduleDAO.saveSchedule(weekSchedule);
 
-            CalendarFrame view = new CalendarFrame();
+            CalendarFrame view = new CalendarFrame(); // temp
             BlockOffTimeOutputBoundary presenter = new CalendarPresenter(view);
             BlockOffTimeInputBoundary interactor = new BlockOffTimeInteractor(scheduleDAO, presenter);
             BlockOffTimeController controller = new BlockOffTimeController(interactor);

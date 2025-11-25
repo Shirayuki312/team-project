@@ -36,12 +36,12 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private JButton generateBtn;
     private JButton settingsBtn;
 
-    // 1. Default Constructor
+    private Schedule currentSchedule;
+
     public CalendarFrame() {
         this((SetPreferencesInputBoundary) null);
     }
 
-    // 2. Main Constructor
     public CalendarFrame(SetPreferencesInputBoundary settingsInteractor) {
         super();
 
@@ -107,6 +107,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             settingsView.setVisible(true);
         });
 
+        // [初始化] 默认英文
         updateLanguage("en");
     }
 
@@ -135,46 +136,50 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         }
 
         try {
+            // [关键修正] 只有 "messages"，没有任何后缀！
             this.bundle = ResourceBundle.getBundle("messages", locale);
+
             setTitle(bundle.getString("app.title"));
             dayBtn.setText(bundle.getString("btn.day"));
             weekBtn.setText(bundle.getString("btn.week"));
             generateBtn.setText(bundle.getString("btn.generate"));
             settingsBtn.setText(bundle.getString("btn.settings"));
             activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));
+
             revalidate();
             repaint();
         } catch (Exception e) {
-            System.err.println("Could not load language bundle: " + e.getMessage());
+            System.err.println("Error loading language: " + e.getMessage());
+            e.printStackTrace();
+
+            // [关键修正] 如果加载失败，手动设置回英文，防止按钮空白！
+            setTitle("Plan4Life - Scheduler");
             dayBtn.setText("Day");
             weekBtn.setText("Week");
+            generateBtn.setText("Generate Schedule");
+            settingsBtn.setText("Settings");
+            activityPanel.setBorder(BorderFactory.createTitledBorder("Activities"));
         }
     }
 
     @Override
     public void updateTheme(String themeName) {
-        // 1. Refresh Look and Feel
         SwingUtilities.updateComponentTreeUI(this);
 
         boolean isDark = "Dark Mode".equals(themeName);
         Color bgColor = isDark ? new Color(40, 40, 40) : Color.WHITE;
 
-        // 2. Set Background
         this.getContentPane().setBackground(bgColor);
         if (this.getContentPane() instanceof JComponent) {
             ((JComponent) this.getContentPane()).setOpaque(true);
         }
 
-        // 3. Update Panels
         calendarPanel.setTheme(themeName);
         activityPanel.setBackground(bgColor);
 
-        // 4. Redraw
         this.revalidate();
         this.repaint();
     }
-
-    private Schedule currentSchedule;
 
     @Override
     public void showMessage(String message) {
@@ -197,7 +202,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             calendarPanel.colorCell(time, color, activityName, isLocked);
         });
 
-        // [关键修复] 使用 1 个参数的方法，而不是 3 个
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
                 calendarPanel.colorBlockedRange(block);
@@ -212,16 +216,12 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 "Optional description for this blocked time:");
 
         if (description == null) {
-            // Cancelled -> Reset visual
             calendarPanel.resetDragSelection();
             return;
         }
 
         if (blockOffTimeController != null) {
-            // 1. Backend Update
             blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
-
-            // 2. Visual Update (Immediate)
             calendarPanel.colorBlockedRange(start, end, columnIndex, description);
         }
     }

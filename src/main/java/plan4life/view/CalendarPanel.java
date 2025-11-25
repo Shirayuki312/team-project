@@ -16,6 +16,7 @@ public class CalendarPanel extends JPanel {
     private int currentColumns = 7;
     private int rows = 24;
 
+    // Drag selection state
     private int startRow = -1;
     private int startCol = -1;
     private int endRow = -1;
@@ -25,9 +26,10 @@ public class CalendarPanel extends JPanel {
     private TimeSelectionListener timeSelectionListener;
     private LockListener lockListener;
 
+    // Persistent blocked times from backend
     private final List<BlockedTime> blockedTimes = new ArrayList<>();
 
-    // Temporary manual list
+    // Temporary manual blocks to keep them visible immediately
     private final List<ManualBlock> manualBlocks = new ArrayList<>();
 
     private String currentThemeName = "Light Mode";
@@ -38,6 +40,7 @@ public class CalendarPanel extends JPanel {
         revalidate();
     }
 
+    // --- Theme Logic ---
     public void setTheme(String themeName) {
         this.currentThemeName = themeName;
         boolean isDark = "Dark Mode".equals(themeName);
@@ -51,8 +54,7 @@ public class CalendarPanel extends JPanel {
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < currentColumns; c++) {
                     if (cells[r][c] != null) {
-                        Color current = cells[r][c].getBackground();
-                        // Only reset unoccupied cells
+                        // Only reset background if it's not blocked by something
                         if (!isBlockedCell(r, c)) {
                             cells[r][c].setBackground(bgColor);
                             cells[r][c].setBorder(BorderFactory.createLineBorder(gridColor));
@@ -61,12 +63,12 @@ public class CalendarPanel extends JPanel {
                 }
             }
         }
-        // Force repaint Blocks to ensure correct styling
+        // Force repaint of all blocks to ensure correct styling
         repaintAllBlocks();
         this.repaint();
     }
 
-    // Helper method: Check if cell is blocked (prevent setTheme from overwriting gray blocks)
+    // Helper: check if a cell is occupied
     private boolean isBlockedCell(int r, int c) {
         for (BlockedTime bt : blockedTimes) {
             if (bt.getColumnIndex() == c && r >= bt.getStart().getHour() && r <= bt.getEnd().getHour()) return true;
@@ -151,12 +153,12 @@ public class CalendarPanel extends JPanel {
 
                 startRow = startCol = endRow = endCol = -1;
 
-                // Clear drag traces
+                // Clear blue drag selection
                 if (tempCol != -1) {
                     for (int r = tempStart; r <= tempEnd; r++) resetCellColor(r, tempCol);
                 }
 
-                // Repaint all Blocks
+                // Redraw persistent blocks
                 repaintAllBlocks();
             }
         };
@@ -227,7 +229,7 @@ public class CalendarPanel extends JPanel {
         cells[r][c].removeAll();
         boolean isDark = "Dark Mode".equals(currentThemeName);
         cells[r][c].setBackground(isDark ? Color.DARK_GRAY : Color.WHITE);
-        cells[r][c].setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY)); // Restore default border
+        cells[r][c].setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
         cells[r][c].revalidate();
         cells[r][c].repaint();
     }
@@ -273,6 +275,10 @@ public class CalendarPanel extends JPanel {
         renderRange(startH, endH, colIndex, description);
     }
 
+    public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int colIndex) {
+        colorBlockedRange(start, end, colIndex, null);
+    }
+
     private void renderBlockedTime(BlockedTime bt) {
         int col = bt.getColumnIndex();
         int start = bt.getStart().getHour();
@@ -280,25 +286,19 @@ public class CalendarPanel extends JPanel {
         renderRange(start, end, col, bt.getDescription());
     }
 
-    // [Core Modification] Render method: Darker color + White border
     private void renderRange(int startH, int endH, int col, String description) {
         for (int r = startH; r <= endH && r < rows; r++) {
             if (col < currentColumns) {
                 JPanel cell = cells[r][col];
 
-                // 1. Background color: Dark Gray (close to screenshot)
-                cell.setBackground(Color.GRAY);
-
-                // 2. Border: White (achieve the separator line effect in screenshot)
-                cell.setBorder(BorderFactory.createLineBorder(Color.WHITE));
-
+                cell.setBackground(Color.GRAY); // Dark Gray
+                cell.setBorder(BorderFactory.createLineBorder(Color.WHITE)); // White Border
                 cell.removeAll();
 
-                // 3. Text: Display only in the first cell, white font
                 if (r == startH) {
                     cell.setLayout(new BorderLayout());
                     JLabel label = new JLabel(description, SwingConstants.CENTER);
-                    label.setForeground(Color.WHITE); // White text
+                    label.setForeground(Color.WHITE); // White Text
                     cell.add(label, BorderLayout.CENTER);
                 }
                 cell.revalidate();
@@ -333,28 +333,7 @@ public class CalendarPanel extends JPanel {
             if (r >= minRow && r <= maxRow) {
                 cells[r][col].setBackground(new Color(173, 216, 230));
             } else {
-                // Check if occupied
-                boolean isBlocked = false;
-                // Check blocked times
-                for(BlockedTime bt : blockedTimes) {
-                    if(bt.getColumnIndex() == col && r >= bt.getStart().getHour() && r <= bt.getEnd().getHour()) {
-                        renderBlockedTime(bt);
-                        isBlocked = true;
-                        break;
-                    }
-                }
-                // Check manual blocks
-                if (!isBlocked) {
-                    for(ManualBlock mb : manualBlocks) {
-                        if(mb.col == col && r >= mb.start.getHour() && r <= mb.end.getHour()) {
-                            renderRange(mb.start.getHour(), mb.end.getHour(), mb.col, mb.description);
-                            isBlocked = true;
-                            break;
-                        }
-                    }
-                }
-
-                if(!isBlocked) {
+                if (!isBlockedCell(r, col)) {
                     resetCellColor(r, col);
                 }
             }

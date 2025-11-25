@@ -11,6 +11,8 @@ import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random; //Temp till we get langchain/langgraph working
 
 // --- 1. IMPORT SETTINGS CLASSES ---
@@ -53,12 +55,20 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton generateBtn = new JButton("Generate Schedule");
 
-        // generateBtn.addActionListener(e -> {
-            // if (calendarController != null) {
-                // calendarController.generateSchedule();
-                // Will update with arguments. Should take inputs and map of all activities
-            // }
-       // });
+        generateBtn.addActionListener(e -> {
+            if (calendarController != null) {
+
+                String routineDescription = getRoutineDescription();
+                Map<String, String> fixedActivities = getFixedActivities();
+
+                if (routineDescription == null) {
+                    showMessage("Schedule generation cancelled.");
+                    return;
+                }
+
+                calendarController.generateSchedule(routineDescription, fixedActivities);
+            }
+        });
 
 
         // --- 4. ADD SETTINGS BUTTON TO THE UI ---
@@ -141,6 +151,19 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.calendarController = controller;
     }
 
+    // --- GETTER FOR ROUTINE DESCRIPTION ---
+    public String getRoutineDescription() {
+        // TODO: Replace with your actual text field / textarea
+        // For now, we pop up a simple input (temporary)
+        return JOptionPane.showInputDialog(this, "Describe your routine:");
+    }
+
+    // --- GETTER FOR FIXED ACTIVITIES ---
+    public Map<String, String> getFixedActivities() {
+        // TODO: Replace with inputs you collect from your UI
+        // For now, return empty until ActivitiesPanel is integrated
+        return new HashMap<>();
+    }
 
     @Override
     public void showMessage(String message) {

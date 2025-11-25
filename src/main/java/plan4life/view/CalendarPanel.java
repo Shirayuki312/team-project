@@ -16,7 +16,6 @@ public class CalendarPanel extends JPanel {
     private int currentColumns = 7;
     private int rows = 24;
 
-    // Drag selection state
     private int startRow = -1;
     private int startCol = -1;
     private int endRow = -1;
@@ -26,21 +25,23 @@ public class CalendarPanel extends JPanel {
     private TimeSelectionListener timeSelectionListener;
     private LockListener lockListener;
 
-    // Persistent blocked times from backend
     private final List<BlockedTime> blockedTimes = new ArrayList<>();
-
-    // Temporary manual blocks to keep them visible immediately
     private final List<ManualBlock> manualBlocks = new ArrayList<>();
 
     private String currentThemeName = "Light Mode";
 
     public CalendarPanel() {
-        setBorder(BorderFactory.createTitledBorder("Weekly Calendar"));
+        // [修复 1] 移除构造函数中的硬编码
         buildGrid(7);
         revalidate();
     }
 
-    // --- Theme Logic ---
+    // [新增] 允许 CalendarFrame 修改边框标题
+    public void updateTitle(String title) {
+        this.setBorder(BorderFactory.createTitledBorder(title));
+        this.repaint();
+    }
+
     public void setTheme(String themeName) {
         this.currentThemeName = themeName;
         boolean isDark = "Dark Mode".equals(themeName);
@@ -54,7 +55,7 @@ public class CalendarPanel extends JPanel {
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < currentColumns; c++) {
                     if (cells[r][c] != null) {
-                        // Only reset background if it's not blocked by something
+                        Color current = cells[r][c].getBackground();
                         if (!isBlockedCell(r, c)) {
                             cells[r][c].setBackground(bgColor);
                             cells[r][c].setBorder(BorderFactory.createLineBorder(gridColor));
@@ -63,12 +64,10 @@ public class CalendarPanel extends JPanel {
                 }
             }
         }
-        // Force repaint of all blocks to ensure correct styling
         repaintAllBlocks();
         this.repaint();
     }
 
-    // Helper: check if a cell is occupied
     private boolean isBlockedCell(int r, int c) {
         for (BlockedTime bt : blockedTimes) {
             if (bt.getColumnIndex() == c && r >= bt.getStart().getHour() && r <= bt.getEnd().getHour()) return true;
@@ -153,12 +152,10 @@ public class CalendarPanel extends JPanel {
 
                 startRow = startCol = endRow = endCol = -1;
 
-                // Clear blue drag selection
                 if (tempCol != -1) {
                     for (int r = tempStart; r <= tempEnd; r++) resetCellColor(r, tempCol);
                 }
 
-                // Redraw persistent blocks
                 repaintAllBlocks();
             }
         };
@@ -200,7 +197,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setDayView() {
-        setBorder(BorderFactory.createTitledBorder("Daily Calendar"));
+        // [关键修复] 移除硬编码
         buildGrid(1);
         setTheme(currentThemeName);
         revalidate();
@@ -208,7 +205,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setWeekView() {
-        setBorder(BorderFactory.createTitledBorder("Weekly Calendar"));
+        // [关键修复] 移除硬编码
         buildGrid(7);
         setTheme(currentThemeName);
         revalidate();
@@ -275,10 +272,6 @@ public class CalendarPanel extends JPanel {
         renderRange(startH, endH, colIndex, description);
     }
 
-    public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int colIndex) {
-        colorBlockedRange(start, end, colIndex, null);
-    }
-
     private void renderBlockedTime(BlockedTime bt) {
         int col = bt.getColumnIndex();
         int start = bt.getStart().getHour();
@@ -291,8 +284,10 @@ public class CalendarPanel extends JPanel {
             if (col < currentColumns) {
                 JPanel cell = cells[r][col];
 
-                cell.setBackground(Color.GRAY); // Dark Gray
-                cell.setBorder(BorderFactory.createLineBorder(Color.WHITE)); // White Border
+                cell.setBackground(Color.GRAY);
+
+                cell.setBorder(BorderFactory.createLineBorder(Color.WHITE));
+
                 cell.removeAll();
 
                 if (r == startH) {
@@ -333,8 +328,11 @@ public class CalendarPanel extends JPanel {
             if (r >= minRow && r <= maxRow) {
                 cells[r][col].setBackground(new Color(173, 216, 230));
             } else {
-                if (!isBlockedCell(r, col)) {
+                boolean isBlocked = isBlockedCell(r, col);
+                if (!isBlocked) {
                     resetCellColor(r, col);
+                } else {
+                    repaintAllBlocks();
                 }
             }
         }

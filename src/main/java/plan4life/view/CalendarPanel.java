@@ -12,29 +12,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CalendarPanel extends JPanel {
-
     private JPanel[][] cells;
     private int currentColumns = 7;
-    private int rows = 24;
+    private final int rows = 24;
 
     private int startRow = -1;
-    private int startCol = -1;
     private int endRow = -1;
-    private int endCol = -1;
+    private int column = -1;
     private boolean dragging = false;
 
-    private TimeSelectionListener timeSelectionListener;
-    private LockListener lockListener;
-
+    // Persistent blocked times from backend
     private final List<BlockedTime> blockedTimes = new ArrayList<>();
+
+    // Temporary manual blocks to keep them visible immediately (optional)
     private final List<ManualBlock> manualBlocks = new ArrayList<>();
+
+    private TimeSelectionListener listener;
+    private LockListener lockListener;
 
     private String currentThemeName = "Light Mode";
 
     public CalendarPanel() {
         // [Fix] Remove hardcoded title
         buildGrid(7);
-        revalidate();
     }
 
     public void updateTitle(String title) {
@@ -42,6 +42,90 @@ public class CalendarPanel extends JPanel {
         this.repaint();
     }
 
+    public void setTheme(String themeName) {
+        this.currentThemeName = themeName;
+        boolean isDark = "Dark Mode".equals(themeName);
+    private void buildGrid(int columns) {
+        removeAll();
+        currentColumns = columns;
+        setLayout(new GridLayout(rows, columns, 2, 2));
+
+        cells = new JPanel[rows][columns];
+
+        boolean isDark = "Dark Mode".equals(currentThemeName);
+        Color bgColor = isDark ? Color.DARK_GRAY : Color.WHITE;
+        Color gridColor = isDark ? Color.GRAY : Color.LIGHT_GRAY;
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < columns; c++) {
+                JPanel cell = new JPanel();
+                cell.setBackground(bgColor);
+                cell.setBorder(BorderFactory.createLineBorder(gridColor));
+                cells[r][c] = cell;
+                add(cell);
+            }
+        }
+
+        // Panel-level mouse handling (avoid per-cell listeners — fixes offset/inconsistent events)
+        MouseAdapter ma = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    handleRightClick(e);
+                    return;
+                }
+
+                dragging = true;
+                Point p = e.getPoint();
+                column = getColumnFromX(p.x);
+                startRow = getRowFromY(p.y);
+                endRow = startRow;
+                updateSelectionVisual();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (!dragging) return;
+                Point p = e.getPoint();
+                int newRow = getRowFromY(p.y);
+                int newCol = getColumnFromX(p.x);
+                if (newRow != -1) endRow = newRow;
+                if (newCol != -1) column = newCol;
+                updateSelectionVisual();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!dragging) return;
+                dragging = false;
+
+                if (column != -1 && startRow != -1 && endRow != -1) {
+                    int min = Math.min(startRow, endRow);
+                    int max = Math.max(startRow, endRow);
+
+                    if (listener != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime start = now.withHour(min).withMinute(0).withSecond(0).withNano(0);
+                        LocalDateTime end = now.withHour(max).withMinute(59).withSecond(59).withNano(999_999_999);
+                        int scheduleId = (currentColumns == 1) ? 1 : 2;
+                        listener.onTimeSelected(start, end, scheduleId, column);
+                    }
+                }
+
+                // Always clear the visual selection and restore underlying blocks
+                clearDragSelection();
+            }
+        };
+
+        // Attach panel-level listeners
+        addMouseListener(ma);
+        addMouseMotionListener(ma);
+
+        revalidate();
+        repaint();
+    }
+
+    // --- Theme Logic ---
     public void setTheme(String themeName) {
         this.currentThemeName = themeName;
         boolean isDark = "Dark Mode".equals(themeName);
@@ -55,10 +139,11 @@ public class CalendarPanel extends JPanel {
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < currentColumns; c++) {
                     if (cells[r][c] != null) {
-                        Color current = cells[r][c].getBackground();
+                        // Only reset background if the underlying data doesn't dictate otherwise
                         if (!isBlockedCell(r, c)) {
                             cells[r][c].setBackground(bgColor);
                             cells[r][c].setBorder(BorderFactory.createLineBorder(gridColor));
+                            cells[r][c].removeAll();
                         }
                     }
                 }
@@ -66,6 +151,19 @@ public class CalendarPanel extends JPanel {
         }
         repaintAllBlocks();
         this.repaint();
+    }
+
+    private void handleRightClick(MouseEvent e) {
+        if (lockListener == null) return;
+
+        // convert point to the cell under the cursor
+        Point p = e.getPoint();
+        int c = getColumnFromX(p.x);
+        int r = getRowFromY(p.y);
+        if (r >= 0 && c >= 0) {
+            String key = (c + 1) + ":" + r;
+            lockListener.onLockToggle(key);
+        }
     }
 
     private boolean isBlockedCell(int r, int c) {
@@ -79,7 +177,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setTimeSelectionListener(TimeSelectionListener listener) {
-        this.timeSelectionListener = listener;
+        this.listener = listener;
     }
 
     public interface LockListener {
@@ -88,112 +186,6 @@ public class CalendarPanel extends JPanel {
 
     public void setLockListener(LockListener listener) {
         this.lockListener = listener;
-    }
-
-    private void buildGrid(int columns) {
-        this.currentColumns = columns;
-        removeAll();
-        setLayout(new GridLayout(rows, columns, 2, 2));
-
-        cells = new JPanel[rows][columns];
-
-        MouseAdapter interactionHandler = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    handleRightClick(e);
-                    return;
-                }
-                dragging = true;
-                Point p = convertPointToPanel(e);
-                startCol = getColumnFromX(p.x);
-                startRow = getRowFromY(p.y);
-                endCol = startCol;
-                endRow = startRow;
-                updateSelection();
-            }
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (!dragging) return;
-                Point p = convertPointToPanel(e);
-                int newRow = getRowFromY(p.y);
-                int newCol = getColumnFromX(p.x);
-
-                if (newRow != -1 && newCol != -1 && (newRow != endRow || newCol != endCol)) {
-                    endRow = newRow;
-                    endCol = newCol;
-                    updateSelection();
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (!dragging) return;
-                dragging = false;
-
-                if (startCol != -1 && startRow != -1 && endCol != -1 && endRow != -1) {
-                    int minRow = Math.min(startRow, endRow);
-                    int maxRow = Math.max(startRow, endRow);
-                    int col = startCol;
-
-                    if (timeSelectionListener != null) {
-                        LocalDateTime now = LocalDateTime.now();
-                        LocalDateTime start = now.withHour(minRow).withMinute(0).withSecond(0).withNano(0);
-                        LocalDateTime end = now.withHour(maxRow).withMinute(59).withSecond(59).withNano(999999999);
-                        int scheduleId = (currentColumns == 1) ? 1 : 2;
-                        timeSelectionListener.onTimeSelected(start, end, scheduleId, col);
-                    }
-                }
-
-                int tempCol = startCol;
-                int tempStart = Math.min(startRow, endRow);
-                int tempEnd = Math.max(startRow, endRow);
-
-                startRow = startCol = endRow = endCol = -1;
-
-                if (tempCol != -1) {
-                    for (int r = tempStart; r <= tempEnd; r++) resetCellColor(r, tempCol);
-                }
-
-                repaintAllBlocks();
-            }
-        };
-
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < columns; c++) {
-                JPanel cell = new JPanel();
-                boolean isDark = "Dark Mode".equals(currentThemeName);
-                cell.setBackground(isDark ? Color.DARK_GRAY : Color.WHITE);
-                cell.setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
-
-                cell.addMouseListener(interactionHandler);
-                cell.addMouseMotionListener(interactionHandler);
-                cell.putClientProperty("row", r);
-                cell.putClientProperty("col", c);
-
-                add(cell);
-                cells[r][c] = cell;
-            }
-        }
-    }
-
-    private void handleRightClick(MouseEvent e) {
-        if (lockListener != null) {
-            JComponent c = (JComponent) e.getComponent();
-            Object rObj = c.getClientProperty("row");
-            Object cObj = c.getClientProperty("col");
-            if (rObj != null && cObj != null) {
-                int r = (int) rObj;
-                int cIdx = (int) cObj;
-                String key = (cIdx + 1) + ":" + r;
-                lockListener.onLockToggle(key);
-            }
-        }
-    }
-
-    private Point convertPointToPanel(MouseEvent e) {
-        return SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), this);
     }
 
     public void setDayView() {
@@ -217,20 +209,25 @@ public class CalendarPanel extends JPanel {
         this.manualBlocks.clear();
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < currentColumns; c++) {
-                resetCellColor(r, c);
+                resetCellVisual(r, c);
             }
         }
     }
 
-    private void resetCellColor(int r, int c) {
-        cells[r][c].removeAll();
+    private void resetCellVisual(int r, int c) {
+        JPanel cell = cells[r][c];
+        cell.removeAll();
         boolean isDark = "Dark Mode".equals(currentThemeName);
-        cells[r][c].setBackground(isDark ? Color.DARK_GRAY : Color.WHITE);
-        cells[r][c].setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
-        cells[r][c].revalidate();
-        cells[r][c].repaint();
+        cell.setBackground(isDark ? Color.DARK_GRAY : Color.WHITE);
+        cell.setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
+        cell.revalidate();
+        cell.repaint();
     }
 
+    /**
+     * Paint a single cell with given color and optional centered text and lock border.
+     * This is used by external presenters to force a given visual state.
+     */
     public void colorCell(String timeKey, Color color, String text, boolean isLocked) {
         try {
             String[] parts = timeKey.split(":");
@@ -259,17 +256,27 @@ public class CalendarPanel extends JPanel {
     }
 
     public void colorBlockedRange(BlockedTime bt) {
+        // ensure not duplicated
         if (!this.blockedTimes.contains(bt)) {
             this.blockedTimes.add(bt);
         }
         renderBlockedTime(bt);
     }
 
+    /**
+     * Optional immediate feedback API - if controller wants to show the block immediately
+     * before backend confirmation (manualBlocks), use the method with description param.
+     */
     public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int colIndex, String description) {
+        // Keep a manualBlock for immediate visibility; controller should remove it if creation fails.
         manualBlocks.add(new ManualBlock(start, end, colIndex, description));
         int startH = start.getHour();
         int endH = end.getHour();
         renderRange(startH, endH, colIndex, description);
+    }
+
+    public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int colIndex) {
+        colorBlockedRange(start, end, colIndex, "Blocked");
     }
 
     private void renderBlockedTime(BlockedTime bt) {
@@ -280,6 +287,7 @@ public class CalendarPanel extends JPanel {
     }
 
     private void renderRange(int startH, int endH, int col, String description) {
+        if (description == null) description = "Blocked"; // ensure default text always shows
         for (int r = startH; r <= endH && r < rows; r++) {
             if (col < currentColumns) {
                 JPanel cell = cells[r][col];
@@ -309,41 +317,152 @@ public class CalendarPanel extends JPanel {
     }
 
     private int getRowFromY(int y) {
-        if (rows <= 0) return -1;
-        int cellHeight = getHeight() / rows;
-        if (cellHeight == 0) return -1;
-        int row = y / cellHeight;
-        return Math.max(0, Math.min(rows - 1, row));
+        // Prefer exact bounds-based hit test to avoid offset issues
+        if (cells == null) return Math.max(0, Math.min(rows - 1, y * rows / Math.max(1, getHeight())));
+        for (int r = 0; r < rows; r++) {
+            Rectangle bounds = cells[r][0].getBounds();
+            if (y >= bounds.y && y < bounds.y + bounds.height) {
+                return r;
+            }
+        }
+        // fallback
+        return Math.max(0, Math.min(rows - 1, rows * y / Math.max(1, getHeight())));
     }
 
-    private void updateSelection() {
-        if (startRow == -1 || startCol == -1) return;
-        int minRow = Math.min(startRow, endRow);
-        int maxRow = Math.max(startRow, endRow);
-        int col = startCol;
+    private void updateSelectionVisual() {
+        // Clear previous visuals in the column then draw current selection
+        if (column == -1) return;
 
+        // First restore column visuals from underlying data
         for (int r = 0; r < rows; r++) {
-            if (r >= minRow && r <= maxRow) {
-                cells[r][col].setBackground(new Color(173, 216, 230));
+            if (!isBlockedCell(r, column)) {
+                resetCellVisual(r, column);
             } else {
-                boolean isBlocked = isBlockedCell(r, col);
-                if (!isBlocked) {
-                    resetCellColor(r, col);
-                } else {
-                    repaintAllBlocks();
+                // redraw blocked cell if underlying data says it's blocked
+                boolean shown = false;
+                for (BlockedTime bt : blockedTimes) {
+                    if (bt.getColumnIndex() == column && r >= bt.getStart().getHour() && r <= bt.getEnd().getHour()) {
+                        renderBlockedTime(bt);
+                        shown = true;
+                        break;
+                    }
+                }
+                if (!shown) {
+                    // manual blocks
+                    for (ManualBlock mb : manualBlocks) {
+                        if (mb.col == column && r >= mb.start.getHour() && r <= mb.end.getHour()) {
+                            renderRange(mb.start.getHour(), mb.end.getHour(), mb.col, mb.description);
+                            break;
+                        }
+                    }
                 }
             }
+        }
+
+        if (startRow == -1) return;
+
+        int min = Math.min(startRow, endRow);
+        int max = Math.max(startRow, endRow);
+
+        for (int r = min; r <= max; r++) {
+            JPanel cell = cells[r][column];
+
+            // Determine overlap against persistent blockedTimes
+            boolean overlap = false;
+            for (BlockedTime bt : blockedTimes) {
+                if (bt.getColumnIndex() == column && r >= bt.getStart().getHour() && r <= bt.getEnd().getHour()) {
+                    overlap = true;
+                    break;
+                }
+            }
+            // Also check manualBlocks (these are intended to be displayed immediately)
+            for (ManualBlock mb : manualBlocks) {
+                if (mb.col == column && r >= mb.start.getHour() && r <= mb.end.getHour()) {
+                    overlap = true;
+                    break;
+                }
+            }
+
+            if (overlap) {
+                cell.setBackground(new Color(230, 173, 187)); // reddish for overlap
+            } else {
+                cell.setBackground(new Color(173, 216, 230)); // blueish for selection
+            }
+            cell.revalidate();
+            cell.repaint();
         }
     }
 
     // [Conflict Resolution] Use this simplified method
     public void resetDragSelection() {
-        repaintAllBlocks();
+        clearDragSelection();
+    }
+
+    private void clearDragSelection() {
+        if (column == -1 || startRow == -1) {
+            // reset state
+            startRow = endRow = column = -1;
+            return;
+        }
+
+        int min = Math.min(startRow, endRow);
+        int max = Math.max(startRow, endRow);
+
+        // For each cell in the selection column, restore underlying blocked/empty visual
+        for (int r = min; r <= max; r++) {
+            boolean blocked = false;
+            String description = null;
+
+            for (BlockedTime bt : blockedTimes) {
+                int col = bt.getColumnIndex();
+                int btStart = bt.getStart().getHour();
+                int btEnd = bt.getEnd().getHour();
+                if (r >= btStart && r <= btEnd && column == col) {
+                    blocked = true;
+                    if (r == btStart) description = bt.getDescription();
+                    break;
+                }
+            }
+
+            if (blocked) {
+                JPanel cell = cells[r][column];
+                cell.setBackground(Color.GRAY);
+                cell.removeAll();
+                if (description != null) {
+                    JLabel label = new JLabel(description, SwingConstants.CENTER);
+                    cell.setLayout(new BorderLayout());
+                    cell.add(label, BorderLayout.CENTER);
+                }
+                cell.revalidate();
+                cell.repaint();
+            } else {
+                resetCellVisual(r, column);
+            }
+        }
+
+        // reset drag state
+        startRow = -1;
+        endRow = -1;
+        column = -1;
     }
 
     private void repaintAllBlocks() {
-        for(BlockedTime bt : blockedTimes) renderBlockedTime(bt);
-        for(ManualBlock mb : manualBlocks) renderRange(mb.start.getHour(), mb.end.getHour(), mb.col, mb.description);
+        // clear all cells then re-render
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < currentColumns; c++) {
+                resetCellVisual(r, c);
+            }
+        }
+        for (BlockedTime bt : blockedTimes) {
+            renderBlockedTime(bt);
+        }
+        for (ManualBlock mb : manualBlocks) {
+            renderRange(mb.start.getHour(), mb.end.getHour(), mb.col, mb.description);
+        }
+    }
+
+    public void updateSchedule(Schedule schedule) {
+        // placeholder if schedule updates required
     }
 
     public void updateSchedule(Schedule schedule) {

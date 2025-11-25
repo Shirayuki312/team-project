@@ -1,6 +1,7 @@
 package plan4life.view;
 
 import plan4life.entities.BlockedTime;
+import plan4life.entities.Schedule;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,12 +32,11 @@ public class CalendarPanel extends JPanel {
     private String currentThemeName = "Light Mode";
 
     public CalendarPanel() {
-        // [修复 1] 移除构造函数中的硬编码
+        // [Fix] Remove hardcoded title
         buildGrid(7);
         revalidate();
     }
 
-    // [新增] 允许 CalendarFrame 修改边框标题
     public void updateTitle(String title) {
         this.setBorder(BorderFactory.createTitledBorder(title));
         this.repaint();
@@ -197,7 +197,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setDayView() {
-        // [关键修复] 移除硬编码
+        // [Fix] Removed hardcoded title
         buildGrid(1);
         setTheme(currentThemeName);
         revalidate();
@@ -205,7 +205,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setWeekView() {
-        // [关键修复] 移除硬编码
+        // [Fix] Removed hardcoded title
         buildGrid(7);
         setTheme(currentThemeName);
         revalidate();
@@ -285,15 +285,13 @@ public class CalendarPanel extends JPanel {
                 JPanel cell = cells[r][col];
 
                 cell.setBackground(Color.GRAY);
-
                 cell.setBorder(BorderFactory.createLineBorder(Color.WHITE));
-
                 cell.removeAll();
 
                 if (r == startH) {
                     cell.setLayout(new BorderLayout());
                     JLabel label = new JLabel(description, SwingConstants.CENTER);
-                    label.setForeground(Color.WHITE); // White Text
+                    label.setForeground(Color.WHITE);
                     cell.add(label, BorderLayout.CENTER);
                 }
                 cell.revalidate();
@@ -338,6 +336,7 @@ public class CalendarPanel extends JPanel {
         }
     }
 
+    // [Conflict Resolution] Use this simplified method
     public void resetDragSelection() {
         repaintAllBlocks();
     }
@@ -345,6 +344,9 @@ public class CalendarPanel extends JPanel {
     private void repaintAllBlocks() {
         for(BlockedTime bt : blockedTimes) renderBlockedTime(bt);
         for(ManualBlock mb : manualBlocks) renderRange(mb.start.getHour(), mb.end.getHour(), mb.col, mb.description);
+    }
+
+    public void updateSchedule(Schedule schedule) {
     }
 
     private static class ManualBlock {
@@ -357,7 +359,7 @@ public class CalendarPanel extends JPanel {
             this.start = start;
             this.end = end;
             this.col = col;
-            this.description = description;
+            this.description = description != null ? description : "Blocked";
         }
     }
 }

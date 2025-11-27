@@ -7,6 +7,7 @@ public class Schedule {
     private final int scheduleId;
     private final String type;    // "day", "week", etc.
     private final Map<String, String> activities = new LinkedHashMap<>();    // e.g., "Monday 9 AM" -> "Workout"
+    private final List<Activity> tasks;
     private final List<ScheduledBlock> unlockedBlocks;
     private final List<ScheduledBlock> lockedBlocks;
     private final List<BlockedTime> blockedTimes;
@@ -18,6 +19,7 @@ public class Schedule {
         this.scheduleId = scheduleId;
         this.type = type;
 
+        this.tasks = new ArrayList<>();
         this.unlockedBlocks = new ArrayList<>();
         this.lockedBlocks = new ArrayList<>();
         this.blockedTimes = new ArrayList<>();
@@ -69,6 +71,12 @@ public class Schedule {
     public Map<String, String> getActivities() {
         return Collections.unmodifiableMap(activities);
     }
+
+    public void addTask(Activity activity) {
+        tasks.add(activity);
+    }
+
+    public List<Activity> getTasks() { return Collections.unmodifiableList(tasks); }
 
     // Reformatted populateRandomly
     public void populateRandomly() {

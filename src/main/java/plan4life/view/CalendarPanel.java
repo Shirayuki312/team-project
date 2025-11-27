@@ -42,9 +42,9 @@ public class CalendarPanel extends JPanel {
         this.repaint();
     }
 
-    public void setTheme(String themeName) {
-        this.currentThemeName = themeName;
-        boolean isDark = "Dark Mode".equals(themeName);
+//    public void setTheme(String themeName) {
+//        this.currentThemeName = themeName;
+//        boolean isDark = "Dark Mode".equals(themeName);
     private void buildGrid(int columns) {
         removeAll();
         currentColumns = columns;
@@ -463,9 +463,6 @@ public class CalendarPanel extends JPanel {
 
     public void updateSchedule(Schedule schedule) {
         // placeholder if schedule updates required
-    }
-
-    public void updateSchedule(Schedule schedule) {
     }
 
     private static class ManualBlock {

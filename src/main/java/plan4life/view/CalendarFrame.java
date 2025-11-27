@@ -4,8 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
 
 // Import Controllers and Entities
 import plan4life.controller.CalendarController;
@@ -15,7 +14,6 @@ import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
-import java.util.Random;
 
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
@@ -99,7 +97,21 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
 
-        // Listeners
+        generateBtn.addActionListener(e -> {
+            if (calendarController != null) {
+
+                String routineDescription = getRoutineDescription();
+                Map<String, String> fixedActivities = getFixedActivities();
+
+                if (routineDescription == null) {
+                    showMessage("Schedule generation cancelled.");
+                    return;
+                }
+
+                calendarController.generateSchedule(routineDescription, fixedActivities);
+            }
+        });
+
         dayBtn.addActionListener(e -> {
             calendarPanel.setDayView();
             currentView = "day";
@@ -122,6 +134,20 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         });
 
         updateLanguage("en");
+    }
+
+    // --- GETTER FOR ROUTINE DESCRIPTION ---
+    public String getRoutineDescription() {
+        // TODO: Replace with your actual text field / textarea
+        // For now, we pop up a simple input (temporary)
+        return JOptionPane.showInputDialog(this, "Describe your routine:");
+    }
+
+    // --- GETTER FOR FIXED ACTIVITIES ---
+    public Map<String, String> getFixedActivities() {
+        // TODO: Replace with inputs you collect from your UI
+        // For now, return empty until ActivitiesPanel is integrated
+        return new HashMap<>();
     }
 
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {

@@ -16,7 +16,6 @@ public class CalendarPanel extends JPanel {
     private int currentColumns = 7;
     private final int rows = 24;
 
-    // Drag selection state
     private int startRow = -1;
     private int endRow = -1;
     private int column = -1;
@@ -34,10 +33,18 @@ public class CalendarPanel extends JPanel {
     private String currentThemeName = "Light Mode";
 
     public CalendarPanel() {
-        setBorder(BorderFactory.createTitledBorder("Weekly Calendar"));
+        // [Fix] Remove hardcoded title
         buildGrid(7);
     }
 
+    public void updateTitle(String title) {
+        this.setBorder(BorderFactory.createTitledBorder(title));
+        this.repaint();
+    }
+
+    public void setTheme(String themeName) {
+        this.currentThemeName = themeName;
+        boolean isDark = "Dark Mode".equals(themeName);
     private void buildGrid(int columns) {
         removeAll();
         currentColumns = columns;
@@ -182,7 +189,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setDayView() {
-        setBorder(BorderFactory.createTitledBorder("Daily Calendar"));
+        // [Fix] Removed hardcoded title
         buildGrid(1);
         setTheme(currentThemeName);
         revalidate();
@@ -190,7 +197,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setWeekView() {
-        setBorder(BorderFactory.createTitledBorder("Weekly Calendar"));
+        // [Fix] Removed hardcoded title
         buildGrid(7);
         setTheme(currentThemeName);
         revalidate();
@@ -386,6 +393,7 @@ public class CalendarPanel extends JPanel {
         }
     }
 
+    // [Conflict Resolution] Use this simplified method
     public void resetDragSelection() {
         clearDragSelection();
     }
@@ -455,6 +463,9 @@ public class CalendarPanel extends JPanel {
 
     public void updateSchedule(Schedule schedule) {
         // placeholder if schedule updates required
+    }
+
+    public void updateSchedule(Schedule schedule) {
     }
 
     private static class ManualBlock {

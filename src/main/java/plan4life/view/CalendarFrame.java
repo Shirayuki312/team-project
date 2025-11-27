@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
+// Import Controllers and Entities
 import plan4life.controller.CalendarController;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
@@ -14,6 +15,7 @@ import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
 
+// Import Settings specific classes
 import plan4life.controller.SettingsController;
 
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
@@ -35,6 +37,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private JButton settingsBtn;
 
     private Schedule currentSchedule;
+
+    // Track current view state
+    private String currentView = "week";
+
 
     public CalendarFrame() {
         this((SetPreferencesInputBoundary) null);
@@ -108,19 +114,25 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
         dayBtn.addActionListener(e -> {
             calendarPanel.setDayView();
+            currentView = "day";
+            updateCalendarTitle();
             displaySchedule(currentSchedule);
         });
 
         weekBtn.addActionListener(e -> {
             calendarPanel.setWeekView();
+            currentView = "week";
+            updateCalendarTitle();
             displaySchedule(currentSchedule);
         });
 
-        settingsBtn.addActionListener(e -> {
-            settingsView.setVisible(true);
+        settingsBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                settingsView.setVisible(true);
+            }
         });
 
-        // [初始化] 默认英文
         updateLanguage("en");
     }
 
@@ -151,6 +163,21 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.calendarController = controller;
     }
 
+    private void updateCalendarTitle() {
+        if (bundle == null) return;
+
+        String key = "calendar." + currentView + ".title";
+        String fallbackTitle = currentView.equals("day") ? "Daily Calendar" : "Weekly Calendar";
+
+        try {
+            String title = bundle.containsKey(key) ? bundle.getString(key) : fallbackTitle;
+            calendarPanel.updateTitle(title);
+        } catch (Exception e) {
+            calendarPanel.updateTitle(fallbackTitle);
+        }
+    }
+
+
     @Override
     public void updateLanguage(String languageCode) {
         Locale locale;
@@ -163,7 +190,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         }
 
         try {
-            // [关键修正] 只有 "messages"，没有任何后缀！
             this.bundle = ResourceBundle.getBundle("messages", locale);
 
             setTitle(bundle.getString("app.title"));
@@ -173,19 +199,17 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             settingsBtn.setText(bundle.getString("btn.settings"));
             activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));
 
+            updateCalendarTitle();
+
             revalidate();
             repaint();
         } catch (Exception e) {
-            System.err.println("Error loading language: " + e.getMessage());
-            e.printStackTrace();
-
-            // [关键修正] 如果加载失败，手动设置回英文，防止按钮空白！
-            setTitle("Plan4Life - Scheduler");
+            System.err.println("Could not load language bundle: " + e.getMessage());
             dayBtn.setText("Day");
             weekBtn.setText("Week");
             generateBtn.setText("Generate Schedule");
             settingsBtn.setText("Settings");
-            activityPanel.setBorder(BorderFactory.createTitledBorder("Activities"));
+            updateCalendarTitle();
         }
     }
 

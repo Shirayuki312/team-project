@@ -148,5 +148,14 @@ public class Schedule {
             }
         }
     }
+
+    public Integer getId() {
+        return scheduleId;
+    }
+
+    // Just for JUnit tests. This would normally be package-protected or private.
+    public void addUnlockedBlockForTest(ScheduledBlock block) {
+        unlockedBlocks.add(block);
+    }
 }
 

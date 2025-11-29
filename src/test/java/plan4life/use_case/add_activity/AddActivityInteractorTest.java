@@ -61,6 +61,17 @@ class AddActivityInteractorTest {
     }
 
     @Test
+    void testDeleteActivity() {
+        Activity activity = new Activity("Workout", 1.5f);
+        testSchedule.addTask(activity);
+        assertEquals(1, testSchedule.getTasks().size());
+
+        testSchedule.removeTask(activity);
+
+        assertTrue(testSchedule.getTasks().isEmpty());
+    }
+
+    @Test
     void testInvalidDurationZero() {
         AddActivityRequestModel request = new AddActivityRequestModel(1, "Workout", 0f);
         AddActivityResponseModel response = interactor.execute(request);

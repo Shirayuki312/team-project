@@ -1,26 +1,118 @@
 package plan4life.view;
 
+import plan4life.entities.Activity;
+import plan4life.entities.Schedule;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class ActivityPanel extends JPanel {
+    private Schedule schedule;
     private final DefaultListModel<String> activityListModel = new DefaultListModel<>();
     private final JList<String> activityList = new JList<>(activityListModel);
-    private final JTextField inputField = new JTextField(12);
-    private final JButton addButton = new JButton("Add");
+    private final JButton addButton = new JButton("Add Activity");
+    private final JButton deleteButton = new JButton("Delete Activity"); // New button
 
-    public ActivityPanel() {
+    public ActivityPanel(Schedule schedule) {
+        this.schedule = schedule;
+
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Activities"));
-        setPreferredSize(new Dimension(250, 0));
+        setPreferredSize(new Dimension(275, 0));
 
-        JPanel inputPanel = new JPanel();
-        inputPanel.add(inputField);
-        inputPanel.add(addButton);
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+        topPanel.add(addButton);
+        topPanel.add(Box.createRigidArea(new Dimension(2, 0))); // spacing
+        topPanel.add(deleteButton);
 
+        // Scrollable list of activities
         JScrollPane listScroll = new JScrollPane(activityList);
 
-        add(inputPanel, BorderLayout.NORTH);
+        add(topPanel, BorderLayout.NORTH);
         add(listScroll, BorderLayout.CENTER);
+
+        // Add button opens the form
+        addButton.addActionListener(e -> showAddActivityForm());
+
+        // Delete button removes the selected activity
+        deleteButton.addActionListener(e -> deleteSelectedActivity());
+
+        // Initial refresh
+        refreshActivityList();
+    }
+
+    /** Show a simple input form for a new activity */
+    private void showAddActivityForm() {
+        JTextField descriptionField = new JTextField(12);
+        JTextField durationField = new JTextField(5);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 5, 5));
+        form.add(new JLabel("Description:"));
+        form.add(descriptionField);
+        form.add(new JLabel("Duration (hours):"));
+        form.add(durationField);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                form,
+                "Add New Activity",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String desc = descriptionField.getText().trim();
+            String durText = durationField.getText().trim();
+
+            if (desc.isEmpty() || durText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter both description and duration.");
+                return;
+            }
+
+            try {
+                float duration = Float.parseFloat(durText);
+                Activity newActivity = new Activity(desc, duration);
+
+                // Add to schedule
+                schedule.addTask(newActivity);
+
+                // Refresh UI
+                refreshActivityList();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Duration must be a number.");
+            }
+        }
+    }
+
+    /** Delete the currently selected activity */
+    private void deleteSelectedActivity() {
+        int selectedIndex = activityList.getSelectedIndex();
+        if (selectedIndex == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an activity to delete.");
+            return;
+        }
+
+        Activity activityToRemove = schedule.getTasks().get(selectedIndex);
+        schedule.removeTask(activityToRemove); // Assumes Schedule has a removeTask method
+        refreshActivityList();
+    }
+
+    /** Refresh the activity list */
+    public void refreshActivityList() {
+        activityListModel.clear();
+        if (schedule == null) return;
+
+        List<Activity> tasks = schedule.getTasks();
+        for (Activity a : tasks) {
+            activityListModel.addElement(a.getDescription() + " (" + a.getDuration() + "h)");
+        }
+    }
+
+    /** Allow updating the schedule reference if it changes */
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
+        refreshActivityList();
     }
 }

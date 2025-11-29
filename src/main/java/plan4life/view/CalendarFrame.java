@@ -49,6 +49,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     public CalendarFrame(SetPreferencesInputBoundary settingsInteractor) {
         super();
 
+        this.currentSchedule = new Schedule(1, "week");
         this.settingsInteractor = settingsInteractor;
         this.settingsView = new SettingsView(this);
         this.settingsController = new SettingsController(this.settingsView, this.settingsInteractor);
@@ -91,7 +92,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             }
         });
 
-        this.activityPanel = new ActivityPanel();
+        this.activityPanel = new ActivityPanel(currentSchedule);
 
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);

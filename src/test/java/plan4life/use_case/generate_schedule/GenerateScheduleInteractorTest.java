@@ -24,27 +24,41 @@ class GenerateScheduleInteractorTest {
     @Test
     void testGenerateSchedule_basic() {
         Map<String, String> fixed = new HashMap<>();
-        fixed.put("7:00-8:00", "Breakfast");
-        fixed.put("12:00-13:00", "Lunch");
+        fixed.put("7:00", "Breakfast");
+        fixed.put("12:00", "Lunch");
+
+        List<String> free = Arrays.asList(
+                "Jogging (1.0h)",
+                "Study (2h)"
+        );
 
         GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel("Study, Gym, Relax", fixed);
+                new GenerateScheduleRequestModel(
+                        "Study, Gym, Relax",
+                        fixed,
+                        free
+                );
 
         interactor.execute(request);
 
-        // Presenter should be called
         assertTrue(presenter.wasCalled);
         assertNotNull(presenter.lastResponse);
 
-        // Schedule should be the one produced by MockGenerationService
         Schedule schedule = presenter.lastResponse.getSchedule();
         assertNotNull(schedule);
 
-        // The mock service inserts deterministic test values
-        assertEquals("MOCK_ACTIVITY", schedule.getActivities().get("09:00-10:00"));
-        assertEquals("Breakfast", schedule.getActivities().get("7:00-8:00"));
-        assertEquals("Lunch", schedule.getActivities().get("12:00-13:00"));
+        // From mock generator
+        assertEquals("MOCK_ACTIVITY", schedule.getActivities().get("09:00"));
 
+        // Fixed activities preserved
+        assertEquals("Breakfast", schedule.getActivities().get("7:00"));
+        assertEquals("Lunch", schedule.getActivities().get("12:00"));
+
+        // Free activities assigned by Mock assignActivityToSlot
+        assertTrue(generationService.assigned.contains("Jogging"));
+        assertTrue(generationService.assigned.contains("Study"));
+
+        // Did the interactor pass inputs correctly?
         assertEquals("Study, Gym, Relax", generationService.lastDescription);
         assertEquals(fixed, generationService.lastFixed);
     }
@@ -59,13 +73,13 @@ class GenerateScheduleInteractorTest {
         Schedule schedule = presenter.lastResponse.getSchedule();
         assertNotNull(schedule);
 
-        // Null request should produce an empty schedule
+        // Null request → new Schedule() with empty activity map
         assertTrue(schedule.getActivities().isEmpty());
     }
 
-    // --------------------------------------------------------
+    // ------------------------------
     // Mock Presenter
-    // --------------------------------------------------------
+    // ------------------------------
     private static class MockPresenter implements GenerateScheduleOutputBoundary {
         boolean wasCalled = false;
         GenerateScheduleResponseModel lastResponse;
@@ -77,32 +91,50 @@ class GenerateScheduleInteractorTest {
         }
     }
 
-    // --------------------------------------------------------
+    // ------------------------------
     // Mock ScheduleGenerationService
-    // --------------------------------------------------------
+    // ------------------------------
     private static class MockGenerationService implements ScheduleGenerationService {
 
         String lastDescription;
         Map<String,String> lastFixed;
+        List<String> assigned = new ArrayList<>();
 
         @Override
-        public Schedule generate(String routineDescription, Map<String, String> fixed) {
+        public Schedule generate(String routineDescription,
+                                 Map<String, String> fixedActivities) {
+
             this.lastDescription = routineDescription;
-            this.lastFixed = fixed;
+            this.lastFixed = fixedActivities;
 
-            // Deterministic mock output
             Schedule schedule = new Schedule();
-            schedule.getActivities().put("09:00-10:00", "MOCK_ACTIVITY");
 
-            // Include fixed activities as the real service would
-            if (fixed != null) {
-                schedule.getActivities().putAll(fixed);
+            // Add mock data using real API
+            schedule.addActivity("09:00", "MOCK_ACTIVITY");
+
+            if (fixedActivities != null) {
+                for (var e : fixedActivities.entrySet()) {
+                    schedule.addActivity(e.getKey(), e.getValue());
+                }
             }
 
             return schedule;
         }
+
+        @Override
+        public String findFreeSlot(Schedule schedule) {
+            return "TEMP_SLOT"; // unused by the test
+        }
+
+        @Override
+        public void assignActivityToSlot(Schedule schedule,
+                                         String activityDescription,
+                                         float durationHours) {
+            // Track that interactor passed activity correctly
+            assigned.add(activityDescription);
+
+            // Put a test entry into the schedule
+            schedule.addActivity("FREE_" + assigned.size(), activityDescription);
+        }
     }
 }
-
-
-

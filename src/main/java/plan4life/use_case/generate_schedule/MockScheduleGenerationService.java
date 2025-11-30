@@ -8,9 +8,8 @@ import java.util.Map;
  * It preserves fixed activities and randomly fills a few more slots using Schedule.populateRandomly()
  * (but then overwrites any conflicts with the fixed ones).
  */
-public abstract class MockScheduleGenerationService implements ScheduleGenerationService {
+public class MockScheduleGenerationService implements ScheduleGenerationService {
 
-    @Override
     public Schedule generate(String routineDescription, Map<String, String> fixedActivities) {
         Schedule s = new Schedule();
 
@@ -24,6 +23,14 @@ public abstract class MockScheduleGenerationService implements ScheduleGeneratio
             }
         }
         return s;
+    }
+    @Override
+    public void assignActivityToSlot(Schedule schedule, String activityName) {
+        // tests don't need duration, so do nothing or log
+    }
+    @Override
+    public String findFreeSlot(Schedule schedule) {
+        return ""; // test doesn't use it
     }
 }
 

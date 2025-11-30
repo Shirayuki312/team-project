@@ -28,7 +28,7 @@ class GenerateScheduleInteractorTest {
         fixed.put("12:00-13:00", "Lunch");
 
         GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel("Study, Gym, Relax", fixed);
+                new GenerateScheduleRequestModel("Study, Gym, Relax", fixed, Collections.emptyList());
 
         interactor.execute(request);
 
@@ -100,6 +100,16 @@ class GenerateScheduleInteractorTest {
             }
 
             return schedule;
+        }
+
+        @Override
+        public String findFreeSlot(Schedule schedule) {
+            return "";
+        }
+
+        @Override
+        public void assignActivityToSlot(Schedule schedule, String activityName) {
+
         }
     }
 }

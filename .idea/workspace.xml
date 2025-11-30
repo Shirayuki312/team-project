@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/controller/CalendarController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/controller/CalendarController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleRequestModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleRequestModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/ScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/ScheduleGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarFrame.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +62,8 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "Merging main",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "git-widget-placeholder": "time__and__date__2",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "project.structure.last.edited": "Modules",
@@ -100,6 +96,15 @@
       <option name="presentableId" value="Default" />
       <updated>1762739404779</updated>
     </task>
+    <task id="LOCAL-00001">
+      <option name="closed" value="true" />
+      <created>1764518474305</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1764518474305</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
 </project>

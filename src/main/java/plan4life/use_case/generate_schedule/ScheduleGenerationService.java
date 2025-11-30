@@ -10,7 +10,11 @@ public interface ScheduleGenerationService {
     // @param fixedActivities structured fixed activities map (timeslot -> activity)
     // @return Schedule populated according to inputs
 
-    Schedule generate(String routineDescription, Map<String, String> fixedActivities);
+    Schedule generate(
+            String routineDescription,
+            Map<String, String> fixedActivities,
+            List<UserActivityInput> freeActivities
+    );
 
     // Pick an available time slot in the schedule
     String findFreeSlot(Schedule schedule);

@@ -4,9 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import plan4life.controller.CalendarController;           // calendar & reminder controller
-import plan4life.controller.SettingsController;           // settings controller
 import java.util.*;
 
 // Import Controllers and Entities
@@ -16,7 +13,6 @@ import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
-
 import java.time.LocalDateTime;
 import java.util.Random; // Temp till we get langchain/langgraph working
 import java.util.List;
@@ -24,11 +20,6 @@ import java.util.List;
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
 
-/**
- * Main application frame that shows the calendar and activities.
- * It also reacts to time selections (for blocking time) and
- * integrates with the reminder feature (Use Case 7).
- */
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
 
     private final CalendarPanel calendarPanel;
@@ -298,17 +289,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
      * - create an Event and open the reminder dialog (Use Case 7).
      */
     @Override
-    public void onTimeSelected(LocalDateTime start,
-                               LocalDateTime end,
-                               int scheduleId,
-                               int columnIndex) {
-        String description = JOptionPane.showInputDialog(
-                this,
-                "Optional description for this blocked time:"
-        );
+    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
+        String description = JOptionPane.showInputDialog(this,
+                "Optional description for this blocked time:");
 
         if (description == null) {
-            // user pressed Cancel: clear the dragged highlight and exit
             calendarPanel.resetDragSelection();
             return;
         }
@@ -345,4 +330,3 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         }
     }
 }
-

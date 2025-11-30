@@ -47,12 +47,27 @@ public class ActivityPanel extends JPanel {
     private void showAddActivityForm() {
         JTextField descriptionField = new JTextField(12);
         JTextField durationField = new JTextField(5);
+        JTextField startTimeField = new JTextField(5);  // NEW
 
-        JPanel form = new JPanel(new GridLayout(2, 2, 5, 5));
+        String[] types = {"Free Activity", "Fixed Activity"};
+        JComboBox<String> typeSelector = new JComboBox<>(types);
+
+        JPanel form = new JPanel(new GridLayout(4, 2, 5, 5));
+        form.add(new JLabel("Type:"));
+        form.add(typeSelector);
         form.add(new JLabel("Description:"));
         form.add(descriptionField);
         form.add(new JLabel("Duration (hours):"));
         form.add(durationField);
+        form.add(new JLabel("Start Time (e.g., 14:00):"));
+        form.add(startTimeField);
+
+        startTimeField.setEnabled(false);
+
+        typeSelector.addActionListener(e -> {
+            boolean isFixed = typeSelector.getSelectedItem().equals("Fixed Activity");
+            startTimeField.setEnabled(isFixed);
+        });
 
         int result = JOptionPane.showConfirmDialog(
                 this,
@@ -67,24 +82,35 @@ public class ActivityPanel extends JPanel {
             String durText = durationField.getText().trim();
 
             if (desc.isEmpty() || durText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter both description and duration.");
+                JOptionPane.showMessageDialog(this, "Please enter description and duration.");
                 return;
             }
 
             try {
                 float duration = Float.parseFloat(durText);
-                Activity newActivity = new Activity(desc, duration);
 
-                // Add to schedule
+                Activity newActivity;
+
+                if (typeSelector.getSelectedItem().equals("Fixed Activity")) {
+                    String start = startTimeField.getText().trim();
+                    if (start.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "Fixed activities require a start time.");
+                        return;
+                    }
+                    newActivity = new Activity(desc, duration, start);  // New constructor
+                } else {
+                    newActivity = new Activity(desc, duration);  // Free activity
+                }
+
                 schedule.addTask(newActivity);
-
-                // Refresh UI
                 refreshActivityList();
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Duration must be a number.");
             }
         }
     }
+
 
     /** Delete the currently selected activity */
     private void deleteSelectedActivity() {
@@ -106,7 +132,14 @@ public class ActivityPanel extends JPanel {
 
         List<Activity> tasks = schedule.getTasks();
         for (Activity a : tasks) {
-            activityListModel.addElement(a.getDescription() + " (" + a.getDuration() + "h)");
+            if (a.isFixed()) {
+                activityListModel.addElement("[Fixed] " + a.getDescription()
+                        + " at " + a.getStartTime()
+                        + " (" + a.getDuration() + "h)");
+            } else {
+                activityListModel.addElement("[Free] " + a.getDescription()
+                        + " (" + a.getDuration() + "h)");
+            }
         }
     }
 
@@ -115,8 +148,13 @@ public class ActivityPanel extends JPanel {
         this.schedule = schedule;
         refreshActivityList();
     }
-    public java.util.List<String> getFreeActivities() {
-        return java.util.Collections.list(activityListModel.elements());
+    public List<String> getFreeActivities() {
+        List<String> free = new java.util.ArrayList<>();
+        for (Activity a : schedule.getTasks()) {
+            if (!a.isFixed()) {
+                free.add(a.getDescription() + ":" + a.getDuration());
+            }
+        }
+        return free;
     }
-
 }

@@ -25,7 +25,6 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
 import plan4life.use_case.generate_schedule.ScheduleGenerationService;
-// [关键修复] 必须导入这个 Mock 类
 import plan4life.use_case.generate_schedule.MockScheduleGenerationService;
 
 // --- Use Cases: Lock Activity ---
@@ -33,20 +32,7 @@ import plan4life.use_case.lock_activity.LockActivityInputBoundary;
 import plan4life.use_case.lock_activity.LockActivityInteractor;
 import plan4life.use_case.lock_activity.LockActivityOutputBoundary;
 
-import plan4life.controller.CalendarController;
-import plan4life.view.CalendarFrame;
-
-import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
-import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
-import plan4life.use_case.lock_activity.LockActivityInputBoundary;
-import plan4life.use_case.lock_activity.LockActivityRequestModel;
-
-import javax.swing.SwingUtilities;
-
-import java.time.LocalDateTime;
-
-import javax.swing.*;
-// --- Use Cases: Set Preferences (Your Feature) ---
+// --- Use Cases: Set Preferences ---
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 import plan4life.use_case.set_preferences.SetPreferencesInteractor;
 import plan4life.use_case.set_preferences.SetPreferencesOutputBoundary;
@@ -59,96 +45,67 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            // 1. Initialize Schedule Data Access
+            // ============================================================
+            // 1. SCHEDULE STORAGE
+            // ============================================================
             ScheduleDataAccessInterface scheduleDAO = new InMemoryScheduleDAO();
-            // Pre-load some dummy schedules for testing
-            Schedule daySchedule = new Schedule(1, "day");
-            Schedule weekSchedule = new Schedule(2, "week");
-            scheduleDAO.saveSchedule(daySchedule);
-            scheduleDAO.saveSchedule(weekSchedule);
+
+            // IMPORTANT:
+            // Must create schedules using new constructor (id + type)
+            scheduleDAO.saveSchedule(new Schedule(1, "day"));
+            scheduleDAO.saveSchedule(new Schedule(2, "week"));
 
             // ============================================================
-            // 2. Initialize Settings Feature (Your Backend)
+            // 2. SETTINGS FEATURE
             // ============================================================
-            // A. Create Data Access for Preferences
             UserPreferencesDataAccessInterface userPrefsDAO = new InMemoryUserPreferencesDAO();
-
-            // B. Create Presenter (Handles success/failure messages)
             SettingsPresenter settingsPresenter = new SettingsPresenter();
-
-            // C. Create Interactor (Connects DAO and Presenter)
-            SetPreferencesInputBoundary settingsInteractor = new SetPreferencesInteractor(settingsPresenter, userPrefsDAO);
-
-            view.setCalendarController(calendarController);
-            view.setBlockOffTimeController(controller);
-            view.setVisible(true);
-        });
-
-        GenerateScheduleInputBoundary dummyGenerate = new GenerateScheduleInputBoundary() {
-            @Override
-            public void execute(GenerateScheduleRequestModel requestModel) {
-                System.out.println("[DummyGenerate] generateSchedule called.");
-            }
-        };
-
-        LockActivityInputBoundary dummyLock = new LockActivityInputBoundary() {
-            @Override
-            public void execute(LockActivityRequestModel requestModel) {
-                System.out.println("[DummyLock] lockAndRegenerate called.");
-            }
-        };
-
-        CalendarController controller = new CalendarController(dummyGenerate, dummyLock);
-
-        SwingUtilities.invokeLater(() -> {
-            CalendarFrame frame = new CalendarFrame();
-            frame.setCalendarController(controller);
-            frame.setVisible(true);
-        });
-    }
-}
+            SetPreferencesInputBoundary settingsInteractor =
+                    new SetPreferencesInteractor(settingsPresenter, userPrefsDAO);
 
             // ============================================================
-            // 3. Initialize View (Injecting Settings Interactor)
+            // 3. VIEW
             // ============================================================
             CalendarFrame view = new CalendarFrame(settingsInteractor);
-
-            // [Critical] Pass the View back to the SettingsPresenter
-            // This allows the Presenter to update the UI (Dark Mode/Language)
             settingsPresenter.setView(view);
 
-
             // ============================================================
-            // 4. Initialize Block Off Time Feature
+            // 4. BLOCK-OFF-TIME FEATURE
             // ============================================================
             BlockOffTimeOutputBoundary blockPresenter = new CalendarPresenter(view);
-            BlockOffTimeInputBoundary blockInteractor = new BlockOffTimeInteractor(scheduleDAO, blockPresenter);
-            BlockOffTimeController blockController = new BlockOffTimeController(blockInteractor);
-
+            BlockOffTimeInputBoundary blockInteractor =
+                    new BlockOffTimeInteractor(scheduleDAO, blockPresenter);
+            BlockOffTimeController blockController =
+                    new BlockOffTimeController(blockInteractor);
 
             // ============================================================
-            // 5. Initialize Generate Schedule & Lock Activity Features
+            // 5. GENERATE-SCHEDULE + LOCK LOGIC
             // ============================================================
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
 
-            // [关键修复] 使用 Mock 类，并且去掉了参数 (通常 Mock 不需要 DAO)
-            ScheduleGenerationService scheduleGenerator = new MockScheduleGenerationService();
+            // NEW generator supporting duration and dayIndex keys
+            ScheduleGenerationService generator =
+                    new MockScheduleGenerationService();
 
-            GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(schedulePresenter, scheduleGenerator);
+            GenerateScheduleInputBoundary scheduleInput =
+                    new GenerateScheduleInteractor(schedulePresenter, generator);
 
             LockActivityOutputBoundary lockPresenter = new CalendarPresenter(view);
-            LockActivityInputBoundary lockInteractor = new LockActivityInteractor(lockPresenter, scheduleDAO);
+            LockActivityInputBoundary lockInteractor =
+                    new LockActivityInteractor(lockPresenter, scheduleDAO);
 
-            // Create the main Calendar Controller
-            CalendarController calendarController = new CalendarController(scheduleInput, lockInteractor);
-
+            CalendarController calendarController =
+                    new CalendarController(scheduleInput, lockInteractor);
 
             // ============================================================
-            // 6. Finalize View Setup
+            // 6. CONNECT VIEW → CONTROLLERS
             // ============================================================
             view.setCalendarController(calendarController);
             view.setBlockOffTimeController(blockController);
 
+            // ============================================================
+            // 7. SHOW UI
+            // ============================================================
             view.setVisible(true);
         });
     }

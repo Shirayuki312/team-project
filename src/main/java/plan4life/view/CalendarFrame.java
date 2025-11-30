@@ -7,18 +7,21 @@ import java.awt.event.ActionListener;
 
 import plan4life.controller.CalendarController;           // calendar & reminder controller
 import plan4life.controller.SettingsController;           // settings controller
+import java.util.*;
+
+// Import Controllers and Entities
+import plan4life.controller.CalendarController;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
+import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 
 import java.time.LocalDateTime;
 import java.util.Random; // Temp till we get langchain/langgraph working
 
-// --- 1. IMPORT SETTINGS CLASSES ---
+// Import Settings specific classes
 import plan4life.controller.SettingsController;
-import java.awt.event.ActionListener;
-// (ActionEvent is already imported by your teammate)
 
 /**
  * Main application frame that shows the calendar and activities.
@@ -26,78 +29,71 @@ import java.awt.event.ActionListener;
  * integrates with the reminder feature (Use Case 7).
  */
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
+
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
-    private BlockOffTimeController blockOffTimeController;
-    private Schedule currentSchedule;
-    private CalendarController calendarController; // added controller
 
-    // --- 2. ADD SETTINGS MEMBER VARIABLES ---
+    private BlockOffTimeController blockOffTimeController;
+    private CalendarController calendarController;
+
     private SettingsView settingsView;
     private SettingsController settingsController;
+    private SetPreferencesInputBoundary settingsInteractor;
+
+    private ResourceBundle bundle;
+    private JButton dayBtn;
+    private JButton weekBtn;
+    private JButton generateBtn;
+    private JButton settingsBtn;
+
+    private Schedule currentSchedule;
+
+    // Track current view state
+    private String currentView = "week";
+
 
     public CalendarFrame() {
-        super("Plan4Life - Scheduler");
+        this((SetPreferencesInputBoundary) null);
+    }
 
-        // --- 3. INITIALIZE SETTINGS CLASSES (at the top) ---
-        // (This MUST be done before they are used)
+    public CalendarFrame(SetPreferencesInputBoundary settingsInteractor) {
+        super();
+
+        this.currentSchedule = new Schedule(1, "week");
+        this.settingsInteractor = settingsInteractor;
         this.settingsView = new SettingsView(this);
-        this.settingsController = new SettingsController(this.settingsView);
+        this.settingsController = new SettingsController(this.settingsView, this.settingsInteractor);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 750);
         setLayout(new BorderLayout(10, 10));
 
-        // <--- Top part with Day/Week and Generate Schedule buttons --->
         JPanel topBar = new JPanel(new BorderLayout());
-
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton dayBtn = new JButton("Day");
-        JButton weekBtn = new JButton("Week");
+        dayBtn = new JButton();
+        weekBtn = new JButton();
         leftPanel.add(dayBtn);
         leftPanel.add(weekBtn);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton generateBtn = new JButton("Generate Schedule");
-
-        // generateBtn.addActionListener(e -> {
-            // if (calendarController != null) {
-                // calendarController.generateSchedule();
-                // Will update with arguments. Should take inputs and map of all activities
-            // }
-       // });
-
-
-        // --- 4. ADD SETTINGS BUTTON TO THE UI ---
-        JButton settingsBtn = new JButton("Settings");
-
+        generateBtn = new JButton();
+        settingsBtn = new JButton();
         rightPanel.add(generateBtn);
-        rightPanel.add(settingsBtn); // Add the button to the panel
+        rightPanel.add(settingsBtn);
 
         topBar.add(leftPanel, BorderLayout.WEST);
         topBar.add(rightPanel, BorderLayout.EAST);
 
-        // <--- Calendar Panel --->
         this.calendarPanel = new CalendarPanel();
         calendarPanel.setTimeSelectionListener(this);
 
         calendarPanel.setLockListener(timeKey -> {
             if (currentSchedule == null) return;
-
-            // Toggle lock state
             if (currentSchedule.isLockedKey(timeKey)) {
                 currentSchedule.unlockSlotKey(timeKey);
             } else {
                 currentSchedule.lockSlotKey(timeKey);
             }
-
-            // Call your controller (must exist in the Frame)
-            if (blockOffTimeController != null) {
-                // If your controller regenerates based on block-offs,
-                // call it here (optional depending on final design)
-            }
-
-            // Call your schedule-locking controller
             if (this.calendarController != null) {
                 calendarController.lockAndRegenerate(
                         currentSchedule.getScheduleId(),
@@ -106,37 +102,67 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             }
         });
 
-        // <--- Activities Panel --->
-        this.activityPanel = new ActivityPanel();
+        this.activityPanel = new ActivityPanel(currentSchedule);
 
-        // --- Add to frame ---
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
 
-        // --- Button Logic ---
+        generateBtn.addActionListener(e -> {
+            if (calendarController != null) {
+
+                String routineDescription = getRoutineDescription();
+                Map<String, String> fixedActivities = getFixedActivities();
+
+                if (routineDescription == null) {
+                    showMessage("Schedule generation cancelled.");
+                    return;
+                }
+
+                calendarController.generateSchedule(routineDescription, fixedActivities);
+            }
+        });
+
         dayBtn.addActionListener(e -> {
             calendarPanel.setDayView();
+            currentView = "day";
+            updateCalendarTitle();
             displaySchedule(currentSchedule);
         });
 
         weekBtn.addActionListener(e -> {
             calendarPanel.setWeekView();
+            currentView = "week";
+            updateCalendarTitle();
             displaySchedule(currentSchedule);
         });
 
-        // --- 5. ADD SETTINGS BUTTON LOGIC ---
         settingsBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // When the button is clicked, show the SettingsView dialog
                 settingsView.setVisible(true);
             }
         });
+
+        updateLanguage("en");
+    }
+
+    // --- GETTER FOR ROUTINE DESCRIPTION ---
+    public String getRoutineDescription() {
+        // TODO: Replace with your actual text field / textarea
+        // For now, we pop up a simple input (temporary)
+        return JOptionPane.showInputDialog(this, "Describe your routine:");
+    }
+
+    // --- GETTER FOR FIXED ACTIVITIES ---
+    public Map<String, String> getFixedActivities() {
+        // TODO: Replace with inputs you collect from your UI
+        // For now, return empty until ActivitiesPanel is integrated
+        return new HashMap<>();
     }
 
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {
-        this();
+        this((SetPreferencesInputBoundary) null);
         this.blockOffTimeController = blockOffTimeController;
     }
 
@@ -153,6 +179,74 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.calendarController = controller;
     }
 
+    private void updateCalendarTitle() {
+        if (bundle == null) return;
+
+        String key = "calendar." + currentView + ".title";
+        String fallbackTitle = currentView.equals("day") ? "Daily Calendar" : "Weekly Calendar";
+
+        try {
+            String title = bundle.containsKey(key) ? bundle.getString(key) : fallbackTitle;
+            calendarPanel.updateTitle(title);
+        } catch (Exception e) {
+            calendarPanel.updateTitle(fallbackTitle);
+        }
+    }
+
+
+    @Override
+    public void updateLanguage(String languageCode) {
+        Locale locale;
+        if ("zh".equalsIgnoreCase(languageCode) || "简体中文".equals(languageCode)) {
+            locale = new Locale("zh", "CN");
+        } else if ("fr".equalsIgnoreCase(languageCode) || "Français".equals(languageCode)) {
+            locale = new Locale("fr", "FR");
+        } else {
+            locale = new Locale("en", "US");
+        }
+
+        try {
+            this.bundle = ResourceBundle.getBundle("messages", locale);
+
+            setTitle(bundle.getString("app.title"));
+            dayBtn.setText(bundle.getString("btn.day"));
+            weekBtn.setText(bundle.getString("btn.week"));
+            generateBtn.setText(bundle.getString("btn.generate"));
+            settingsBtn.setText(bundle.getString("btn.settings"));
+            activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));
+
+            updateCalendarTitle();
+
+            revalidate();
+            repaint();
+        } catch (Exception e) {
+            System.err.println("Could not load language bundle: " + e.getMessage());
+            dayBtn.setText("Day");
+            weekBtn.setText("Week");
+            generateBtn.setText("Generate Schedule");
+            settingsBtn.setText("Settings");
+            updateCalendarTitle();
+        }
+    }
+
+    @Override
+    public void updateTheme(String themeName) {
+        SwingUtilities.updateComponentTreeUI(this);
+
+        boolean isDark = "Dark Mode".equals(themeName);
+        Color bgColor = isDark ? new Color(40, 40, 40) : Color.WHITE;
+
+        this.getContentPane().setBackground(bgColor);
+        if (this.getContentPane() instanceof JComponent) {
+            ((JComponent) this.getContentPane()).setOpaque(true);
+        }
+
+        calendarPanel.setTheme(themeName);
+        activityPanel.setBackground(bgColor);
+
+        this.revalidate();
+        this.repaint();
+    }
 
     @Override
     public void showMessage(String message) {
@@ -164,11 +258,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.currentSchedule = schedule;
         if (schedule == null) return;
 
-        // This is where you’ll color each entry in the schedule
-        // For now, until Activities exist, let’s simulate visually:
         calendarPanel.clear();
-
-        Random random = new Random(); //Temp till we get langchain/langgraph working
+        Random random = new Random();
 
         schedule.getActivities().forEach((time, activityName) -> {
             boolean isLocked = currentSchedule.isLockedKey(time);
@@ -180,12 +271,9 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
-                calendarPanel.colorBlockedRange(
-                        block
-                );
+                calendarPanel.colorBlockedRange(block);
             }
         }
-
         calendarPanel.repaint();
     }
 
@@ -236,6 +324,9 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             blockOffTimeController.blockTime(
                     scheduleId, start, end, description, columnIndex
             );
+        if (blockOffTimeController != null) {
+            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+            calendarPanel.colorBlockedRange(start, end, columnIndex, description);
         }
     }
 }

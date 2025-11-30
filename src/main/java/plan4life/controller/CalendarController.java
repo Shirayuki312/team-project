@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import plan4life.use_case.generate_schedule.*;
@@ -24,8 +25,11 @@ public class CalendarController {
         this.lockActivityInteractor = lockActivityInteractor;
     }
 
-    public void generateSchedule(String routineDescription, Map<String, String> fixedActivities) {
-        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription, fixedActivities);
+    public void generateSchedule(String routineDescription,
+                                 Map<String, String> fixedActivities,
+                                 List<String>freeActivities) {
+        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription,
+                fixedActivities, freeActivities);
         generateScheduleInteractor.execute(request);
     }
 

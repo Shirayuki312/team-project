@@ -13,7 +13,7 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
     private final ScheduleGenerationService generationService;
 
     /**
-     * @param presenter the output boundary (presenter)
+     * @param presenter         the output boundary (presenter)
      * @param generationService service responsible for producing Schedule from input (mock or real LLM)
      */
     public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter,
@@ -24,7 +24,6 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
 
     @Override
     public void execute(GenerateScheduleRequestModel requestModel) {
-        // Validate input
         if (requestModel == null) {
             presenter.present(new GenerateScheduleResponseModel(new Schedule()));
             return;
@@ -33,10 +32,14 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
         String description = requestModel.getRoutineDescription();
         Map<String, String> fixed = requestModel.getFixedActivities();
 
-        // Delegate to the generation service (mock or LLM-backed).
+        // Generate initial schedule
         Schedule schedule = generationService.generate(description, fixed);
 
-        // Present schedule to output boundary
+        // NEW: auto-place activities without time/date
+        for (String activity : requestModel.getFreeActivities()) {
+            generationService.assignActivityToSlot(schedule, activity);
+        }
+
         presenter.present(new GenerateScheduleResponseModel(schedule));
     }
 }

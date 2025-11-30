@@ -14,6 +14,7 @@ import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
@@ -102,13 +103,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
                 String routineDescription = getRoutineDescription();
                 Map<String, String> fixedActivities = getFixedActivities();
+                List<String> freeActivities = getFreeActivities();
 
                 if (routineDescription == null) {
                     showMessage("Schedule generation cancelled.");
                     return;
                 }
 
-                calendarController.generateSchedule(routineDescription, fixedActivities);
+                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
             }
         });
 
@@ -149,6 +151,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         // For now, return empty until ActivitiesPanel is integrated
         return new HashMap<>();
     }
+
+    private List<String> getFreeActivities() {
+        return activityPanel.getFreeActivities();
+    }
+
 
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {
         this((SetPreferencesInputBoundary) null);

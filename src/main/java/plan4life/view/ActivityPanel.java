@@ -18,9 +18,21 @@ public class ActivityPanel extends JPanel {
         inputPanel.add(inputField);
         inputPanel.add(addButton);
 
+        addButton.addActionListener(e -> {
+            String text = inputField.getText().trim();
+            if (!text.isEmpty()) {
+                activityListModel.addElement(text);
+                inputField.setText("");
+            }
+        });
+
         JScrollPane listScroll = new JScrollPane(activityList);
 
         add(inputPanel, BorderLayout.NORTH);
         add(listScroll, BorderLayout.CENTER);
     }
+    public java.util.List<String> getFreeActivities() {
+        return java.util.Collections.list(activityListModel.elements());
+    }
+
 }

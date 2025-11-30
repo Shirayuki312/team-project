@@ -48,12 +48,11 @@ public class CalendarController {
         this.lockActivityInteractor = lockActivityInteractor;
     }
 
-
-    public void generateSchedule(String routineDescription, String fixedActivities) {
-        GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel(routineDescription, fixedActivities);
-    public void generateSchedule(String routineDescription, Map<String, String> fixedActivities) {
-        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription, fixedActivities);
+    public void generateSchedule(String routineDescription,
+                                 Map<String, String> fixedActivities,
+                                 List<String>freeActivities) {
+        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription,
+                fixedActivities, freeActivities);
         generateScheduleInteractor.execute(request);
     }
 

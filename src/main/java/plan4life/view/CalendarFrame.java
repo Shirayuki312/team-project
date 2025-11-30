@@ -19,6 +19,7 @@ import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
 import java.util.Random; // Temp till we get langchain/langgraph working
+import java.util.List;
 
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
@@ -113,13 +114,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
                 String routineDescription = getRoutineDescription();
                 Map<String, String> fixedActivities = getFixedActivities();
+                List<String> freeActivities = getFreeActivities();
 
                 if (routineDescription == null) {
                     showMessage("Schedule generation cancelled.");
                     return;
                 }
 
-                calendarController.generateSchedule(routineDescription, fixedActivities);
+                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
             }
         });
 
@@ -156,10 +158,22 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     // --- GETTER FOR FIXED ACTIVITIES ---
     public Map<String, String> getFixedActivities() {
-        // TODO: Replace with inputs you collect from your UI
-        // For now, return empty until ActivitiesPanel is integrated
-        return new HashMap<>();
+        Map<String, String> fixed = new HashMap<>();
+
+        for (plan4life.entities.Activity a : currentSchedule.getTasks()) {
+            if (a.isFixed()) {
+                // key example: "Gym"
+                // value example: "14:00:1.5"
+                fixed.put(a.getDescription(), a.getStartTime() + ":" + a.getDuration());
+            }
+        }
+        return fixed;
     }
+
+    public List<String> getFreeActivities() {
+        return activityPanel.getFreeActivities();
+    }
+
 
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {
         this((SetPreferencesInputBoundary) null);
@@ -172,8 +186,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     /**
      * Injects the CalendarController so this frame can:
-     *  - lock & regenerate schedules
-     *  - register events and open the reminder dialog
+     * - lock & regenerate schedules
+     * - register events and open the reminder dialog
      */
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
@@ -280,8 +294,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     /**
      * Called when the user selects a time range on the calendar.
      * We use this both to:
-     *  - block off time (original behavior), and
-     *  - create an Event and open the reminder dialog (Use Case 7).
+     * - block off time (original behavior), and
+     * - create an Event and open the reminder dialog (Use Case 7).
      */
     @Override
     public void onTimeSelected(LocalDateTime start,
@@ -324,9 +338,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             blockOffTimeController.blockTime(
                     scheduleId, start, end, description, columnIndex
             );
-        if (blockOffTimeController != null) {
-            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
-            calendarPanel.colorBlockedRange(start, end, columnIndex, description);
+            if (blockOffTimeController != null) {
+                blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+                calendarPanel.colorBlockedRange(start, end, columnIndex, description);
+            }
         }
     }
 }

@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/add_activity/AddActivityInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/add_activity/AddActivityInteractorTest.java" afterDir="false" />
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION.">
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/entities/Schedule.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/entities/Schedule.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,6 +49,9 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="35GbYfS4cSbi4EUH900ofZRxpbQ" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -59,7 +66,8 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "AA-tests",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "git-widget-placeholder": "time__and__date__2",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "project.structure.last.edited": "Modules",
@@ -75,17 +83,6 @@
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
-    </configuration>
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="TeamProject" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="TeamProject" />
-      <option name="filePath" />
-      <method v="2" />
     </configuration>
   </component>
   <component name="SharedIndexes">
@@ -103,6 +100,54 @@
       <option name="presentableId" value="Default" />
       <updated>1762739404779</updated>
     </task>
+    <task id="LOCAL-00001">
+      <option name="closed" value="true" />
+      <created>1764518474305</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1764518474305</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Adjusted Activity so it takes startTime arguments">
+      <option name="closed" value="true" />
+      <created>1764518887946</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1764518887946</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Adjusted ActivityPanel so it takes activities with a set time/date vs without.">
+      <option name="closed" value="true" />
+      <created>1764519068350</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1764519068350</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Adjusted Frame, Panel, Schedule to take in new args">
+      <option name="closed" value="true" />
+      <created>1764519979330</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1764519979330</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION.">
+      <option name="closed" value="true" />
+      <created>1764520965697</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1764520965697</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Adjusted Activity so it takes startTime arguments" />
+    <MESSAGE value="Adjusted ActivityPanel so it takes activities with a set time/date vs without." />
+    <MESSAGE value="Adjusted Frame, Panel, Schedule to take in new args" />
+    <MESSAGE value="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION." />
+    <option name="LAST_COMMIT_MESSAGE" value="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION." />
   </component>
 </project>

@@ -314,7 +314,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             //    - setImportantReminderForEvent(...)
             //    - or setImportantReminderForAllEvents(...)
             ReminderDialog dialog =
-                    new ReminderDialog(this, calendarController, event, true);
+                    new ReminderDialog(this, calendarController, event);
             dialog.setVisible(true);
         }
 

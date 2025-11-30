@@ -158,12 +158,19 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     // --- GETTER FOR FIXED ACTIVITIES ---
     public Map<String, String> getFixedActivities() {
-        // TODO: Replace with inputs you collect from your UI
-        // For now, return empty until ActivitiesPanel is integrated
-        return new HashMap<>();
+        Map<String, String> fixed = new HashMap<>();
+
+        for (plan4life.entities.Activity a : currentSchedule.getTasks()) {
+            if (a.isFixed()) {
+                // key example: "Gym"
+                // value example: "14:00:1.5"
+                fixed.put(a.getDescription(), a.getStartTime() + ":" + a.getDuration());
+            }
+        }
+        return fixed;
     }
 
-    private List<String> getFreeActivities() {
+    public List<String> getFreeActivities() {
         return activityPanel.getFreeActivities();
     }
 

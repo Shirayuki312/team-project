@@ -8,7 +8,7 @@ import java.util.Map;
  * It preserves fixed activities and randomly fills a few more slots using Schedule.populateRandomly()
  * (but then overwrites any conflicts with the fixed ones).
  */
-public class MockScheduleGenerationService implements ScheduleGenerationService {
+public abstract class MockScheduleGenerationService implements ScheduleGenerationService {
 
     @Override
     public Schedule generate(String routineDescription, Map<String, String> fixedActivities) {

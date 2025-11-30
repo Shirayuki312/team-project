@@ -115,4 +115,8 @@ public class ActivityPanel extends JPanel {
         this.schedule = schedule;
         refreshActivityList();
     }
+    public java.util.List<String> getFreeActivities() {
+        return java.util.Collections.list(activityListModel.elements());
+    }
+
 }

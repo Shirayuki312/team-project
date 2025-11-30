@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Adjusted Frame, Panel, Schedule to take in new args">
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION.">
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/entities/Activity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/entities/Schedule.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/entities/Schedule.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleRequestModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/GenerateScheduleRequestModel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/ScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/ScheduleGenerationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -131,13 +132,22 @@
       <option name="project" value="LOCAL" />
       <updated>1764519979330</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION.">
+      <option name="closed" value="true" />
+      <created>1764520965697</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1764520965697</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Adjusted Activity so it takes startTime arguments" />
     <MESSAGE value="Adjusted ActivityPanel so it takes activities with a set time/date vs without." />
     <MESSAGE value="Adjusted Frame, Panel, Schedule to take in new args" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adjusted Frame, Panel, Schedule to take in new args" />
+    <MESSAGE value="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION." />
+    <option name="LAST_COMMIT_MESSAGE" value="Adjusted All of Generate Schedule + Tests to make sure they take in the correct args now. IMPORTANT: CHECK WHAT ARGS IT NOW TAKES. IT TAKES IN DAY AND DURATION." />
   </component>
 </project>

@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Should be fixed">
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Merge branch 'testing_branch'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +65,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "fixed__maybe",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "project.structure.last.edited": "Modules",
@@ -75,7 +74,7 @@
     "settings.editor.selected.configurable": "build.tools"
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.GenerateScheduleInteractorTest">
+  <component name="RunManager" selected="Application.Unnamed">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
@@ -143,7 +142,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764532242289</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Merge branch 'testing_branch'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
+      <option name="closed" value="true" />
+      <created>1764542000140</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1764542000140</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -154,7 +161,7 @@
     <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541335327" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541785853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
   </component>

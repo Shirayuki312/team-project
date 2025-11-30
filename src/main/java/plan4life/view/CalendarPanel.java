@@ -161,7 +161,7 @@ public class CalendarPanel extends JPanel {
         int c = getColumnFromX(p.x);
         int r = getRowFromY(p.y);
         if (r >= 0 && c >= 0) {
-            String key = (c + 1) + ":" + r;
+            String key = c + ":" + r; // 0-based
             lockListener.onLockToggle(key);
         }
     }
@@ -231,8 +231,8 @@ public class CalendarPanel extends JPanel {
     public void colorCell(String timeKey, Color color, String text, boolean isLocked) {
         try {
             String[] parts = timeKey.split(":");
-            int day = Integer.parseInt(parts[0]) - 1;
-            int hour = Integer.parseInt(parts[1]);
+            int day = Integer.parseInt(parts[0]);    // 0-based already
+            int hour = Integer.parseInt(parts[1]);   // 0–23
 
             if (day >= 0 && day < currentColumns && hour >= 0 && hour < rows) {
                 JPanel cell = cells[hour][day];

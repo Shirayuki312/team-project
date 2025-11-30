@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Added List">
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Should be fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarFrame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/generate_schedule/GenerateScheduleInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,11 +58,15 @@
     "Application.TestBlockOffTime.executor": "Run",
     "Application.Unnamed.executor": "Run",
     "JUnit.AddActivityInteractorTest.executor": "Run",
+    "JUnit.GenerateScheduleInteractorTest.executor": "Coverage",
+    "JUnit.GenerateScheduleInteractorTest.testGenerateCreatesSchedule.executor": "Debug",
+    "JUnit.MockScheduleGenerationServiceTest.executor": "Coverage",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "git-widget-placeholder": "fixed__maybe",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "project.structure.last.edited": "Modules",
@@ -71,7 +75,7 @@
     "settings.editor.selected.configurable": "build.tools"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="JUnit.GenerateScheduleInteractorTest">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
@@ -79,6 +83,42 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="GenerateScheduleInteractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="TeamProject" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plan4life.use_case.generate_schedule.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plan4life.use_case.generate_schedule" />
+      <option name="MAIN_CLASS_NAME" value="plan4life.use_case.generate_schedule.GenerateScheduleInteractorTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="MockScheduleGenerationServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="TeamProject" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plan4life.use_case.generate_schedule.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plan4life.use_case.generate_schedule" />
+      <option name="MAIN_CLASS_NAME" value="plan4life.use_case.generate_schedule.MockScheduleGenerationServiceTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.GenerateScheduleInteractorTest" />
+        <item itemvalue="JUnit.MockScheduleGenerationServiceTest" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -95,6 +135,27 @@
       <option name="presentableId" value="Default" />
       <updated>1762739404779</updated>
     </task>
+    <task id="LOCAL-00001" summary="Should be fixed">
+      <option name="closed" value="true" />
+      <created>1764532242289</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1764532242289</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Should be fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Should be fixed" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541335327" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    </SUITE>
   </component>
 </project>

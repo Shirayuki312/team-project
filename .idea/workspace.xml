@@ -56,7 +56,7 @@
   "keyToString": {
     "Application.Main.executor": "Run",
     "Application.TestBlockOffTime.executor": "Run",
-    "Application.Unnamed.executor": "Run",
+    "Application.Unnamed.executor": "Coverage",
     "JUnit.AddActivityInteractorTest.executor": "Run",
     "JUnit.GenerateScheduleInteractorTest.executor": "Coverage",
     "JUnit.GenerateScheduleInteractorTest.testGenerateCreatesSchedule.executor": "Debug",
@@ -83,42 +83,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="GenerateScheduleInteractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration default="true" type="JetRunConfigurationType">
       <module name="TeamProject" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="plan4life.use_case.generate_schedule.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="plan4life.use_case.generate_schedule" />
-      <option name="MAIN_CLASS_NAME" value="plan4life.use_case.generate_schedule.GenerateScheduleInteractorTest" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MockScheduleGenerationServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
       <module name="TeamProject" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="plan4life.use_case.generate_schedule.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="plan4life.use_case.generate_schedule" />
-      <option name="MAIN_CLASS_NAME" value="plan4life.use_case.generate_schedule.MockScheduleGenerationServiceTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
+      <option name="filePath" />
+      <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="JUnit.GenerateScheduleInteractorTest" />
-        <item itemvalue="JUnit.MockScheduleGenerationServiceTest" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -146,16 +121,12 @@
     <option name="localTasksCounter" value="2" />
     <servers />
   </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="Should be fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="Should be fixed" />
-  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeInteractorTest.ic" NAME="BlockOffTimeInteractorTest Coverage Results" MODIFIED="1764538883918" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.block_off_time.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541335327" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.block_off_time.*</FILTER>
     </SUITE>
   </component>
 </project>

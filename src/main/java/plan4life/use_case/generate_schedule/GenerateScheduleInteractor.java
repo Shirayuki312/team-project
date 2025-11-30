@@ -39,8 +39,7 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             if (parts.length > 1) {
                 try {
                     duration = Float.parseFloat(parts[1].trim());
-                } catch (NumberFormatException ignore) {
-                    duration = 1.0f;
+                } catch (NumberFormatException ignore) { // duration will be 1.0f by default
                 }
             }
 

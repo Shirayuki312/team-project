@@ -77,11 +77,9 @@ public class Schedule {
         tasks.add(activity);
     }
 
-    public void removeTask(Activity activity) {
-        tasks.remove(activity);
-    }
+    public List<Activity> getTasks() { return tasks; }
 
-    public List<Activity> getTasks() { return Collections.unmodifiableList(tasks); }
+    public void removeTask(Activity activity) { tasks.remove(activity); }
 
     // Reformatted populateRandomly
     public void populateRandomly() {

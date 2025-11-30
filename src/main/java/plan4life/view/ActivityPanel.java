@@ -6,6 +6,7 @@ import plan4life.entities.Schedule;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ActivityPanel extends JPanel {
     private Schedule schedule;
@@ -49,6 +50,12 @@ public class ActivityPanel extends JPanel {
         JTextField durationField = new JTextField(5);
         JTextField startTimeField = new JTextField(5);  // NEW
 
+        String[] dayOptions = {
+                "Any", "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday"
+        };
+        JComboBox<String> daySelector = new JComboBox<>(dayOptions);
+
         String[] types = {"Free Activity", "Fixed Activity"};
         JComboBox<String> typeSelector = new JComboBox<>(types);
 
@@ -61,6 +68,9 @@ public class ActivityPanel extends JPanel {
         form.add(durationField);
         form.add(new JLabel("Start Time (e.g., 14:00):"));
         form.add(startTimeField);
+        form.add(new JLabel("Day:"));
+        form.add(daySelector);
+
 
         startTimeField.setEnabled(false);
 
@@ -80,6 +90,8 @@ public class ActivityPanel extends JPanel {
         if (result == JOptionPane.OK_OPTION) {
             String desc = descriptionField.getText().trim();
             String durText = durationField.getText().trim();
+            String start = startTimeField.getText().trim();
+            int dayIndex = daySelector.getSelectedIndex() - 1;  // 0 = "No Day"
 
             if (desc.isEmpty() || durText.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter description and duration.");
@@ -88,19 +100,35 @@ public class ActivityPanel extends JPanel {
 
             try {
                 float duration = Float.parseFloat(durText);
-
                 Activity newActivity;
 
-                if (typeSelector.getSelectedItem().equals("Fixed Activity")) {
-                    String start = startTimeField.getText().trim();
-                    if (start.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "Fixed activities require a start time.");
-                        return;
-                    }
-                    newActivity = new Activity(desc, duration, start);  // New constructor
-                } else {
-                    newActivity = new Activity(desc, duration);  // Free activity
+                boolean isFixedType = typeSelector.getSelectedItem().equals("Fixed Activity");
+                boolean hasStart = !start.isEmpty();
+                boolean hasDay = dayIndex >= 0;
+
+                // --------------- FOUR CASES ----------------
+
+                // ① Free activity (no start, no day)
+                if (!isFixedType || (!hasStart && !hasDay)) {
+                    newActivity = new Activity(desc, duration);
                 }
+
+                // ② Fixed start time only
+                else if (hasStart && !hasDay) {
+                    newActivity = new Activity(desc, duration, start);
+                }
+
+                // ③ Fixed day only
+                else if (!hasStart && hasDay) {
+                    newActivity = Activity.withDayOnly(desc, duration, dayIndex);
+                }
+
+                // ④ Fully fixed: day + start time
+                else {
+                    newActivity = new Activity(desc, duration, dayIndex, start);
+                }
+
+                // -------------------------------------------
 
                 schedule.addTask(newActivity);
                 refreshActivityList();

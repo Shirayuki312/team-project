@@ -5,13 +5,6 @@ import plan4life.entities.Schedule;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Interactor that orchestrates schedule generation.
- * Supports:
- *   - Routine description (LLM analysis)
- *   - Fixed activities (user-specified exact times)
- *   - Free activities (description + duration, no time)
- */
 public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary {
     private final GenerateScheduleOutputBoundary presenter;
     private final ScheduleGenerationService generationService;
@@ -33,27 +26,19 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
         String description = requestModel.getRoutineDescription();
         Map<String, String> fixed = requestModel.getFixedActivities();
 
-        // 1. Generate baseline schedule using RAG/LLM + fixed constraints
+        // Step 1 — generate base schedule
         Schedule schedule = generationService.generate(description, fixed);
 
-        // 2. Assign free activities intelligently
+        // Step 2 — place free activities ("desc:duration")
         for (String free : requestModel.getFreeActivities()) {
 
-            String activityDesc = free;
+            String[] parts = free.split(":");
+            String activityDesc = parts[0].trim();
+
             float duration = 1.0f;
-
-            // Detect:  "Running (2h)"
-            int parenStart = free.lastIndexOf("(");
-            int parenEnd = free.lastIndexOf(")");
-
-            if (parenStart != -1 && parenEnd != -1 && parenEnd > parenStart) {
-                activityDesc = free.substring(0, parenStart).trim();
-
-                String inside = free.substring(parenStart + 1, parenEnd).trim();
-                inside = inside.replace("h", "").trim();  // remove "h"
-
+            if (parts.length > 1) {
                 try {
-                    duration = Float.parseFloat(inside);
+                    duration = Float.parseFloat(parts[1].trim());
                 } catch (NumberFormatException ignore) {
                     duration = 1.0f;
                 }
@@ -61,7 +46,8 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
 
             generationService.assignActivityToSlot(schedule, activityDesc, duration);
         }
-        // 3. Present output
+
+        // Step 3 — output
         presenter.present(new GenerateScheduleResponseModel(schedule));
     }
 }

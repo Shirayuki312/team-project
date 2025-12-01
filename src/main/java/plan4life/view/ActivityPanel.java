@@ -59,7 +59,7 @@ public class ActivityPanel extends JPanel {
         String[] types = {"Free Activity", "Fixed Activity"};
         JComboBox<String> typeSelector = new JComboBox<>(types);
 
-        JPanel form = new JPanel(new GridLayout(4, 2, 5, 5));
+        JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
         form.add(new JLabel("Type:"));
         form.add(typeSelector);
         form.add(new JLabel("Description:"));

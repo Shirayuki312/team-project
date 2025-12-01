@@ -323,10 +323,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             blockOffTimeController.blockTime(
                     scheduleId, start, end, description, columnIndex
             );
-            if (blockOffTimeController != null) {
-                blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
-                calendarPanel.colorBlockedRange(start, end, columnIndex, description);
-            }
         }
     }
 }

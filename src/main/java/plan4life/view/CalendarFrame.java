@@ -14,7 +14,7 @@ import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
-import java.util.Random; // Temp till we get langchain/langgraph working
+import java.util.Random;
 import java.util.List;
 
 // Import Settings specific classes
@@ -140,21 +140,15 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         updateLanguage("en");
     }
 
-    // --- GETTER FOR ROUTINE DESCRIPTION ---
     public String getRoutineDescription() {
-        // TODO: Replace with your actual text field / textarea
-        // For now, we pop up a simple input (temporary)
         return JOptionPane.showInputDialog(this, "Describe your routine:");
     }
 
-    // --- GETTER FOR FIXED ACTIVITIES ---
     public Map<String, String> getFixedActivities() {
         Map<String, String> fixed = new HashMap<>();
 
         for (plan4life.entities.Activity a : currentSchedule.getTasks()) {
             if (a.isFixed()) {
-                // key example: "Gym"
-                // value example: "14:00:1.5"
                 fixed.put(a.getDescription(), a.getStartTime() + ":" + a.getDuration());
             }
         }
@@ -175,11 +169,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         this.blockOffTimeController = controller;
     }
 
-    /**
-     * Injects the CalendarController so this frame can:
-     * - lock & regenerate schedules
-     * - register events and open the reminder dialog
-     */
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
     }
@@ -282,14 +271,9 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         calendarPanel.repaint();
     }
 
-    /**
-     * Called when the user selects a time range on the calendar.
-     * We use this both to:
-     * - block off time (original behavior), and
-     * - create an Event and open the reminder dialog (Use Case 7).
-     */
+    // [Changed] Now handles a list of columns
     @Override
-    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
+    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, List<Integer> columnIndices) {
         String description = JOptionPane.showInputDialog(this,
                 "Optional description for this blocked time:");
 
@@ -298,34 +282,25 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             return;
         }
 
-        // ---------- Reminder flow (Use Case 7) ----------
+        String title = description.isBlank() ? "Activity" : description;
+
+        // 1. Reminder Logic: Only add ONE reminder for the entire block (or per column, here we do once for simplicity or first column)
+        // If you want a reminder per day, move this inside the loop.
+        // Assuming user wants 1 generic reminder for this multi-day event:
         if (calendarController != null) {
-            // Use the description as the event title (fallback to "Activity")
-            String title = description.isBlank() ? "Activity" : description;
-
-            // Create an Event for this time range
             Event event = new Event(title, start, end);
-
-            // 1) Let the controller know this event exists
             calendarController.registerEvent(event);
-
-            // 2) Open the ReminderDialog; when user clicks OK,
-            //    ReminderDialog.onOk() will call:
-            //    - setImportantReminderForEvent(...)
-            //    - or setImportantReminderForAllEvents(...)
-            ReminderDialog dialog =
-                    new ReminderDialog(this, calendarController, event);
+            ReminderDialog dialog = new ReminderDialog(this, calendarController, event);
             dialog.setVisible(true);
         }
 
-        // ---------- Original block-off-time behavior ----------
+        // 2. Block-Off Logic: Apply to ALL selected columns
         if (blockOffTimeController != null) {
-            blockOffTimeController.blockTime(
-                    scheduleId, start, end, description, columnIndex
-            );
-            if (blockOffTimeController != null) {
-                blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
-                calendarPanel.colorBlockedRange(start, end, columnIndex, description);
+            for (int col : columnIndices) {
+                blockOffTimeController.blockTime(
+                        scheduleId, start, end, description, col
+                );
+                calendarPanel.colorBlockedRange(start, end, col, description);
             }
         }
     }

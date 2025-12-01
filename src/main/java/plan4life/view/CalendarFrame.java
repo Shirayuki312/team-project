@@ -4,6 +4,10 @@ package plan4life.view;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import plan4life.controller.CalendarController; // imported controller
 import plan4life.entities.BlockedTime;
@@ -15,12 +19,15 @@ import java.util.Random; //Temp till we get langchain/langgraph working
 
 // --- 1. IMPORT SETTINGS CLASSES ---
 import plan4life.controller.SettingsController;
-import java.awt.event.ActionListener;
 // (ActionEvent is already imported by your teammate)
 
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
+    private final JTextArea routineDescriptionArea = new JTextArea(5, 30);
+    private final DefaultListModel<String> fixedActivitiesModel = new DefaultListModel<>();
+    private final JList<String> fixedActivitiesList = new JList<>(fixedActivitiesModel);
+    private final JTextField fixedActivityInput = new JTextField(25);
     private BlockOffTimeController blockOffTimeController;
     private Schedule currentSchedule;
     private CalendarController calendarController; // added controller
@@ -63,6 +70,36 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         topBar.add(leftPanel, BorderLayout.WEST);
         topBar.add(rightPanel, BorderLayout.EAST);
 
+        // <--- AI Inputs Panel --->
+        routineDescriptionArea.setLineWrap(true);
+        routineDescriptionArea.setWrapStyleWord(true);
+        fixedActivitiesList.setVisibleRowCount(4);
+        fixedActivitiesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JPanel routinePanel = new JPanel(new BorderLayout(5, 5));
+        routinePanel.add(new JLabel("Routine Description"), BorderLayout.NORTH);
+        routinePanel.add(new JScrollPane(routineDescriptionArea), BorderLayout.CENTER);
+
+        JPanel fixedPanel = new JPanel(new BorderLayout(5, 5));
+        fixedPanel.add(new JLabel("Fixed activities (e.g., Mon 09:00-10:00 Team Sync)"), BorderLayout.NORTH);
+        fixedPanel.add(new JScrollPane(fixedActivitiesList), BorderLayout.CENTER);
+
+        JPanel fixedInputRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        fixedInputRow.add(fixedActivityInput);
+        JButton addFixedBtn = new JButton("Add");
+        JButton removeFixedBtn = new JButton("Remove");
+        fixedInputRow.add(addFixedBtn);
+        fixedInputRow.add(removeFixedBtn);
+        fixedPanel.add(fixedInputRow, BorderLayout.SOUTH);
+
+        JPanel inputGrid = new JPanel(new GridLayout(1, 2, 10, 10));
+        inputGrid.add(routinePanel);
+        inputGrid.add(fixedPanel);
+
+        JPanel generatorInputPanel = new JPanel(new BorderLayout(10, 10));
+        generatorInputPanel.setBorder(BorderFactory.createTitledBorder("Schedule Inputs"));
+        generatorInputPanel.add(inputGrid, BorderLayout.CENTER);
+
         // <--- Calendar Panel --->
         this.calendarPanel = new CalendarPanel();
         calendarPanel.setTimeSelectionListener(this);
@@ -99,6 +136,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
+        add(generatorInputPanel, BorderLayout.SOUTH);
 
         // --- Button Logic ---
         dayBtn.addActionListener(e -> {
@@ -109,6 +147,40 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         weekBtn.addActionListener(e -> {
             calendarPanel.setWeekView();
             displaySchedule(currentSchedule);
+        });
+
+        addFixedBtn.addActionListener(e -> {
+            String input = fixedActivityInput.getText().trim();
+            if (input.isEmpty()) {
+                showMessage("Enter a fixed activity before adding it to the list.");
+                return;
+            }
+            fixedActivitiesModel.addElement(input);
+            fixedActivityInput.setText("");
+        });
+
+        removeFixedBtn.addActionListener(e -> {
+            int selectedIndex = fixedActivitiesList.getSelectedIndex();
+            if (selectedIndex >= 0) {
+                fixedActivitiesModel.remove(selectedIndex);
+            }
+        });
+
+        generateBtn.addActionListener(e -> {
+            if (this.calendarController == null) {
+                showMessage("Calendar controller is not configured.");
+                return;
+            }
+
+            String routineText = routineDescriptionArea.getText().trim();
+            String fixedActivities = getFixedActivitiesAsText();
+
+            if (routineText.isBlank() && fixedActivities.isBlank()) {
+                showMessage("Please enter a routine description or add at least one fixed activity.");
+                return;
+            }
+
+            calendarController.generateSchedule(routineText, fixedActivities);
         });
 
         // --- 5. ADD SETTINGS BUTTON LOGIC ---
@@ -132,6 +204,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
+    }
+
+    private String getFixedActivitiesAsText() {
+        List<String> items = Collections.list(fixedActivitiesModel.elements());
+        return items.stream()
+                .map(String::trim)
+                .filter(entry -> !entry.isBlank())
+                .collect(Collectors.joining("\n"));
     }
 
 

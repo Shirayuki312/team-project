@@ -30,7 +30,8 @@ public class PromptBuilder {
     public String buildSchedulePrompt(String routineSummary,
                                       List<RoutineEventInput> routineEvents,
                                       List<FixedEventInput> fixedEvents,
-                                      int exampleCount) {
+                                      int exampleCount,
+                                      List<RagRetriever.RoutineExample> providedExamples) {
         StringBuilder builder = new StringBuilder();
         builder.append("You are a friendly assistant who proposes a weekly schedule.\n");
         builder.append("Return ONLY JSON with an array named \"events\" where each item has: \n");
@@ -41,8 +42,12 @@ public class PromptBuilder {
         builder.append("Flexible routine hints: ").append(gson.toJson(routineEvents)).append("\n");
         builder.append("Fixed items that must be preserved: ").append(gson.toJson(fixedEvents)).append("\n\n");
 
-        List<RagRetriever.RoutineExample> examples = ragRetriever.retrieveExamples(routineSummary, exampleCount);
-        if (!examples.isEmpty()) {
+        List<RagRetriever.RoutineExample> examples = providedExamples;
+        if ((examples == null || examples.isEmpty()) && ragRetriever != null) {
+            examples = ragRetriever.retrieveExamples(routineSummary, exampleCount);
+        }
+
+        if (examples != null && !examples.isEmpty()) {
             StringJoiner joiner = new StringJoiner("\n\n", "Examples to imitate:\n", "\n");
             for (RagRetriever.RoutineExample example : examples) {
                 String exampleText = "Routine: " + example.getRoutineSummary() + "\n" +

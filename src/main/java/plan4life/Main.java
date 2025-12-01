@@ -37,12 +37,17 @@ public class Main {
             RagRetriever ragRetriever = new RagRetriever();
             PromptBuilder promptBuilder = new PromptBuilder(ragRetriever);
             LlmScheduleService llmScheduleService = new LlmScheduleService(promptBuilder);
+            String configuredModel = LlmScheduleService.resolveModelId();
+            boolean hasApiKey = System.getenv("HUGGINGFACE_API_KEY") != null
+                    && !System.getenv("HUGGINGFACE_API_KEY").isBlank();
+            System.out.printf("[Main] LLM configured model: %s (API key present: %b)%n", configuredModel, hasApiKey);
             ConstraintSolver constraintSolver = new ConstraintSolver();
             GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(
                     schedulePresenter,
                     ragRetriever,
                     llmScheduleService,
-                    constraintSolver);
+                    constraintSolver,
+                    scheduleDAO);
 
             LockActivityOutputBoundary lock_presenter = new CalendarPresenter(view);
             LockActivityInputBoundary lock_interactor = new LockActivityInteractor(lock_presenter, scheduleDAO);

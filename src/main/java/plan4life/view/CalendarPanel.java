@@ -239,6 +239,16 @@ public class CalendarPanel extends JPanel {
                 cell.setBackground(color);
                 cell.removeAll();
                 cell.setLayout(new BorderLayout());
+                String lockText = isLocked ? "\uD83D\uDD12" : "\uD83D\uDD13"; // 🔒 vs 🔓 unicode (had to google it, might be wrong)
+                JLabel lockLabel = new JLabel(lockText);
+                lockLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                lockLabel.setBorder(BorderFactory.createEmptyBorder(2,6,2,6));
+                lockLabel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (lockListener != null) lockListener.onLockToggle(timeKey);
+                    }
+                });
                 if (text != null) {
                     JLabel label = new JLabel(text, SwingConstants.CENTER);
                     cell.add(label, BorderLayout.CENTER);
@@ -249,6 +259,7 @@ public class CalendarPanel extends JPanel {
                     boolean isDark = "Dark Mode".equals(currentThemeName);
                     cell.setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
                 }
+                cell.add(lockLabel, BorderLayout.EAST);
                 cell.revalidate();
                 cell.repaint();
             }

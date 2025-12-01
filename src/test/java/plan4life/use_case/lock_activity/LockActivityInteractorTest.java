@@ -96,10 +96,13 @@ class LockActivityInteractorTest {
         }
 
         @Override
-        public String findFreeSlot(Schedule schedule) { return null; }
+        public String findFreeSlot(Schedule schedule) {
+            return null;
+        }
 
         @Override
-        public void assignActivityToSlot(Schedule schedule, String desc, float dur) { }
+        public void assignActivityToSlot(Schedule schedule, String desc, float dur) { //default input is empty
+        }
     }
 }
 

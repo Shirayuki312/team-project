@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Merge branch 'main' of https://github.com/Shirayuki312/team-project&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/set_preferences/SetPreferencesInteractorTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,12 +36,12 @@
     &quot;assignee&quot;: &quot;MihirP30&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Shirayuki312/team-project.git",
-    "accountId": "440b792c-6e3c-428c-9da6-a32d99f39647"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Shirayuki312/team-project.git&quot;,
+    &quot;accountId&quot;: &quot;440b792c-6e3c-428c-9da6-a32d99f39647&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -61,7 +57,7 @@
   "keyToString": {
     "Application.Main.executor": "Run",
     "Application.TestBlockOffTime.executor": "Run",
-    "Application.Unnamed.executor": "Coverage",
+    "Application.Unnamed.executor": "Run",
     "JUnit.AddActivityInteractorTest.executor": "Run",
     "JUnit.GenerateScheduleInteractorTest.executor": "Coverage",
     "JUnit.GenerateScheduleInteractorTest.testGenerateCreatesSchedule.executor": "Debug",
@@ -88,10 +84,25 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Unnamed">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="GenerateScheduleInteractorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="TeamProject" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plan4life.use_case.generate_schedule.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plan4life.use_case.generate_schedule" />
+      <option name="MAIN_CLASS_NAME" value="plan4life.use_case.generate_schedule.GenerateScheduleInteractorTest" />
+      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -113,6 +124,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.GenerateScheduleInteractorTest" />
         <item itemvalue="JUnit.LockActivityInteractorTest" />
       </list>
     </recent_temporary>
@@ -166,11 +178,11 @@
     <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541785853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
-    </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$LockActivityInteractorTest.ic" NAME="LockActivityInteractorTest Coverage Results" MODIFIED="1764546597502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+    <SUITE FILE_PATH="coverage/team_project$LockActivityInteractorTest.ic" NAME="LockActivityInteractorTest Coverage Results" MODIFIED="1764605043297" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.lock_activity.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764605103112" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
   </component>
 </project>

@@ -1,43 +1,22 @@
 package plan4life.view;
 
 import plan4life.controller.CalendarController;
+import plan4life.view.Event;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ReminderDialog extends JDialog {
-
+public class ReminderDialog extends JDialog{
     private final JSpinner minutesSpinner;
     private final JComboBox<String> alertTypeBox;
-    private final JComboBox<Event.UrgencyLevel> urgencyBox;
-    private final JPanel colorPreview;
 
-    private final JCheckBox sendMessageCheck;
-    private final JCheckBox sendEmailCheck;
-    private final JCheckBox soundCheck;
-
-    private final JRadioButton applyThisEventRadio;
-    private final JRadioButton applyAllEventsRadio;
-
-    private final CalendarController controller;
-    private final Event event;
-
-    /**
-     * @param owner
-     * @param controller    calendar controller
-     * @param event         event needed to be set reminder；if from Setting to set reminder，can be null
-     * @param allowApplyAll
-     */
     public ReminderDialog(Frame owner,
                           CalendarController controller,
-                          Event event,
-                          boolean allowApplyAll) {
+                          Event event) {
         super(owner, "Set Important Reminder", true); // modal dialog
-        this.controller = controller;
-        this.event = event;
 
         JLabel titleLabel = new JLabel(
-                "Set reminder time and options for important events:");
+                "This event is marked as Important. Set a reminder time:");
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.PLAIN, 13f));
 
         alertTypeBox = new JComboBox<>(new String[]{
@@ -46,38 +25,18 @@ public class ReminderDialog extends JDialog {
         });
 
         minutesSpinner = new JSpinner(
-                new SpinnerNumberModel(15, 0, 1440, 5));
+                new SpinnerNumberModel(15, 0, 1440, 5)); // default 15 mins
+
         JLabel minutesLabel = new JLabel("minutes before");
 
-        urgencyBox = new JComboBox<>(Event.UrgencyLevel.values());
-        colorPreview = new JPanel();
-        colorPreview.setPreferredSize(new Dimension(30, 18));
-        updateColorPreview((Event.UrgencyLevel) urgencyBox.getSelectedItem());
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
 
-        urgencyBox.addActionListener(e ->
-                updateColorPreview((Event.UrgencyLevel) urgencyBox.getSelectedItem()));
+        okButton.addActionListener(e -> {
+            int minutesBefore = (Integer) minutesSpinner.getValue();
+            String alertType = (String) alertTypeBox.getSelectedItem();
 
-        sendMessageCheck = new JCheckBox("Send message");
-        sendEmailCheck = new JCheckBox("Send email");
-        soundCheck = new JCheckBox("Play sound");
-        soundCheck.setSelected(true);
-
-        applyThisEventRadio = new JRadioButton("Apply to this event only");
-        applyAllEventsRadio = new JRadioButton("Apply to all events");
-
-        ButtonGroup scopeGroup = new ButtonGroup();
-        scopeGroup.add(applyThisEventRadio);
-        scopeGroup.add(applyAllEventsRadio);
-
-        if (event != null) {
-            applyThisEventRadio.setSelected(true);
-        } else {
-            // If no event，use settings open reminder，default apply for all events”
-            applyAllEventsRadio.setSelected(true);
-            applyThisEventRadio.setEnabled(false);
-        }
-
-        applyAllEventsRadio.setEnabled(allowApplyAll);
+            controller.setImportantReminder(event, minutesBefore, alertType);
 
         // ---- Buttons ----
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -96,32 +55,26 @@ public class ReminderDialog extends JDialog {
         okBtn.addActionListener(e -> onOk());
 
 
-        // ---- Layout ----
         JPanel content = new JPanel(new GridBagLayout());
         GridBagConstraints gc = new GridBagConstraints();
         gc.insets = new Insets(8, 10, 8, 10);
-
         gc.gridx = 0;
         gc.gridy = 0;
-        gc.gridwidth = 4;
+        gc.gridwidth = 3;
         gc.anchor = GridBagConstraints.WEST;
         content.add(titleLabel, gc);
 
         gc.gridy++;
         gc.gridwidth = 1;
-        gc.weightx = 0;
-        gc.fill = GridBagConstraints.NONE;
+        gc.fill = GridBagConstraints.HORIZONTAL;
         content.add(new JLabel("Alert:"), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
-        gc.gridwidth = 3;
-        gc.fill = GridBagConstraints.HORIZONTAL;
         content.add(alertTypeBox, gc);
 
         gc.gridx = 0;
         gc.gridy++;
-        gc.gridwidth = 1;
         gc.weightx = 0;
         content.add(new JLabel("Remind me:"), gc);
 
@@ -131,36 +84,14 @@ public class ReminderDialog extends JDialog {
         gc.gridx = 2;
         content.add(minutesLabel, gc);
 
-        gc.gridx = 0;
-        gc.gridy++;
-        content.add(new JLabel("Urgency:"), gc);
-
-        gc.gridx = 1;
-        gc.gridwidth = 2;
-        content.add(urgencyBox, gc);
-
-        gc.gridx = 3;
-        gc.gridwidth = 1;
-        content.add(colorPreview, gc);
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnPanel.add(cancelButton);
+        btnPanel.add(okButton);
 
         gc.gridx = 0;
         gc.gridy++;
-        gc.gridwidth = 4;
-        gc.anchor = GridBagConstraints.WEST;
-        JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        channelPanel.add(sendMessageCheck);
-        channelPanel.add(sendEmailCheck);
-        channelPanel.add(soundCheck);
-        content.add(channelPanel, gc);
-
-        gc.gridy++;
-        JPanel scopePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        scopePanel.add(applyThisEventRadio);
-        scopePanel.add(applyAllEventsRadio);
-        content.add(scopePanel, gc);
-
-        gc.gridy++;
-        gc.gridwidth = 4;
+        gc.gridwidth = 3;
+        gc.weightx = 1.0;
         gc.anchor = GridBagConstraints.EAST;
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.add(cancelBtn);
@@ -232,4 +163,3 @@ public class ReminderDialog extends JDialog {
     }
 
 }
-

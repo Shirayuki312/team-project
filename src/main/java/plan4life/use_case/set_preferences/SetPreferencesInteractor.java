@@ -8,7 +8,6 @@ public class SetPreferencesInteractor implements SetPreferencesInputBoundary {
     final SetPreferencesOutputBoundary presenter;
     final UserPreferencesDataAccessInterface dataAccess;
 
-    // [关键修复] 构造函数必须接收 2 个参数：Presenter 和 DAO
     public SetPreferencesInteractor(SetPreferencesOutputBoundary presenter,
                                     UserPreferencesDataAccessInterface dataAccess) {
         this.presenter = presenter;

@@ -172,8 +172,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     /**
      * Injects the CalendarController so this frame can:
-     *  - lock & regenerate schedules
-     *  - register events and open the reminder dialog
+     * - lock & regenerate schedules
+     * - register events and open the reminder dialog
      */
     public void setCalendarController(CalendarController controller) {
         this.calendarController = controller;
@@ -280,8 +280,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     /**
      * Called when the user selects a time range on the calendar.
      * We use this both to:
-     *  - block off time (original behavior), and
-     *  - create an Event and open the reminder dialog (Use Case 7).
+     * - block off time (original behavior), and
+     * - create an Event and open the reminder dialog (Use Case 7).
      */
     @Override
     public void onTimeSelected(LocalDateTime start,
@@ -324,10 +324,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             blockOffTimeController.blockTime(
                     scheduleId, start, end, description, columnIndex
             );
-        if (blockOffTimeController != null) {
-            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
-            calendarPanel.colorBlockedRange(start, end, columnIndex, description);
+            if (blockOffTimeController != null) {
+                blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+                calendarPanel.colorBlockedRange(start, end, columnIndex, description);
+            }
         }
     }
 }
-

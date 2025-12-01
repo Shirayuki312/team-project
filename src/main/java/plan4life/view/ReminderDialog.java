@@ -179,6 +179,7 @@ public class ReminderDialog extends JDialog {
         boolean sendEmail = sendEmailCheck.isSelected();
         boolean playSound = soundCheck.isSelected();
 
+        // 如果只应用到当前 event，但当前没有 event，就提示并返回
         if (applyThisEventRadio.isSelected() && event == null) {
             JOptionPane.showMessageDialog(
                     this,
@@ -190,8 +191,8 @@ public class ReminderDialog extends JDialog {
         }
 
         if (applyAllEventsRadio.isSelected()) {
-
-            controller.setImportantReminderForAllEvents(event,
+            // ✅ 注意这里 **不要** 传 event
+            controller.setImportantReminderForAllEvents(
                     minutesBefore,
                     alertType,
                     urgencyLevel,
@@ -200,7 +201,7 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
         } else {
-
+            // 只对当前这个 event 设置提醒
             controller.setImportantReminderForEvent(
                     event,
                     minutesBefore,
@@ -211,6 +212,7 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
 
+            // 确保这个 event 被注册到 controller 的 events 列表里
             controller.registerEvent(event);
         }
 

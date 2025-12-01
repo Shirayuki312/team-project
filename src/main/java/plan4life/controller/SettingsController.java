@@ -12,7 +12,6 @@ public class SettingsController {
     private final SettingsView settingsView;
     private final SetPreferencesInputBoundary interactor;
 
-    // [关键修复] 构造函数现在必须接收 2 个参数：View 和 Interactor
     public SettingsController(SettingsView view, SetPreferencesInputBoundary interactor) {
         this.settingsView = view;
         this.interactor = interactor;
@@ -32,12 +31,10 @@ public class SettingsController {
 
     private void saveSettings() {
         try {
-            // 1. 从 View 获取数据
             String theme = settingsView.getLightModeRadio().isSelected() ? "Light Mode" : "Dark Mode";
             String language = (String) settingsView.getLanguageCombo().getSelectedItem();
             String timeZone = (String) settingsView.getTimezoneCombo().getSelectedItem();
 
-            // 解析提醒时间
             String reminderStr = (String) settingsView.getReminderCombo().getSelectedItem();
             int reminderMinutes = 15;
             if (reminderStr != null) {
@@ -45,17 +42,17 @@ public class SettingsController {
                 if (reminderStr.contains("1 hour")) reminderMinutes = 60;
             }
 
-            // 2. 创建 RequestModel
+            // 2. RequestModel
             SetPreferencesRequestModel request = new SetPreferencesRequestModel(
                     theme, language, reminderMinutes, timeZone
             );
 
-            // 3. 调用 Use Case
+            // 3. Use Case
             if (interactor != null) {
                 interactor.execute(request);
             }
 
-            // 4. 关闭窗口
+            // 4. turn off
             settingsView.dispose();
 
         } catch (Exception e) {

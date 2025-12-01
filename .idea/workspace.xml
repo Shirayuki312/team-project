@@ -5,11 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Merge branch 'main' of https://github.com/Shirayuki312/team-project&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/set_preferences/SetPreferencesInteractorTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/generate_schedule/MockScheduleGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/lock_activity/LockActivityInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/lock_activity/LockActivityInteractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,12 +40,12 @@
     &quot;assignee&quot;: &quot;MihirP30&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Shirayuki312/team-project.git&quot;,
-    &quot;accountId&quot;: &quot;a32bc603-c321-409a-8ca1-b8ae2ff3cfe6&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Shirayuki312/team-project.git",
+    "accountId": "440b792c-6e3c-428c-9da6-a32d99f39647"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -65,21 +67,28 @@
     "JUnit.GenerateScheduleInteractorTest.testGenerateCreatesSchedule.executor": "Debug",
     "JUnit.LockActivityInteractorTest.executor": "Coverage",
     "JUnit.MockScheduleGenerationServiceTest.executor": "Coverage",
+    "JUnit.SetPreferencesInteractorTest.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "lock__fix",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "build.tools"
+    "settings.editor.selected.configurable": "build.tools",
+    "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.LockActivityInteractorTest">
+  <component name="RunManager">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
@@ -111,7 +120,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.25557.131" />
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26830.84" />
+        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-IU-252.26830.84" />
       </set>
     </attachedChunks>
   </component>
@@ -122,6 +132,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1762739404779</updated>
+      <workItem from="1764560705799" duration="1340000" />
     </task>
     <task id="LOCAL-00001" summary="Should be fixed">
       <option name="closed" value="true" />
@@ -141,6 +152,9 @@
     </task>
     <option name="localTasksCounter" value="3" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">

@@ -10,6 +10,7 @@ public class Schedule {
     private final List<ScheduledBlock> unlockedBlocks;
     private final List<ScheduledBlock> lockedBlocks;
     private final List<BlockedTime> blockedTimes;
+    private final List<String> unplacedActivities;
 
     // Set of locked time keys (e.g., "Mon 9:00")
     private final Set<String> lockedSlotKeys = new HashSet<>();
@@ -21,6 +22,7 @@ public class Schedule {
         this.unlockedBlocks = new ArrayList<>();
         this.lockedBlocks = new ArrayList<>();
         this.blockedTimes = new ArrayList<>();
+        this.unplacedActivities = new ArrayList<>();
     }
 
     public Schedule() {
@@ -42,9 +44,31 @@ public class Schedule {
         return Collections.unmodifiableList(unlockedBlocks);
     }
 
+    public List<String> getUnplacedActivities() {
+        return Collections.unmodifiableList(unplacedActivities);
+    }
+
+    public void addUnplacedActivity(String activityName) {
+        if (activityName != null && !activityName.isBlank()) {
+            unplacedActivities.add(activityName);
+        }
+    }
+
     // locked keys accessor
     public Set<String> getLockedSlotKeys() {
         return Collections.unmodifiableSet(lockedSlotKeys);
+    }
+
+    public void addLockedBlock(ScheduledBlock block) {
+        if (block != null) {
+            lockedBlocks.add(block);
+        }
+    }
+
+    public void addUnlockedBlock(ScheduledBlock block) {
+        if (block != null) {
+            unlockedBlocks.add(block);
+        }
     }
 
     // lock/unlock using time-key strings
@@ -149,4 +173,3 @@ public class Schedule {
         }
     }
 }
-

@@ -4,9 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import plan4life.controller.CalendarController;           // calendar & reminder controller
-import plan4life.controller.SettingsController;           // settings controller
 import java.util.*;
 
 // Import Controllers and Entities
@@ -16,18 +13,13 @@ import plan4life.entities.Schedule;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
-
 import java.time.LocalDateTime;
 import java.util.Random; // Temp till we get langchain/langgraph working
+import java.util.List;
 
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
 
-/**
- * Main application frame that shows the calendar and activities.
- * It also reacts to time selections (for blocking time) and
- * integrates with the reminder feature (Use Case 7).
- */
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
 
     private final CalendarPanel calendarPanel;
@@ -113,13 +105,14 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
                 String routineDescription = getRoutineDescription();
                 Map<String, String> fixedActivities = getFixedActivities();
+                List<String> freeActivities = getFreeActivities();
 
                 if (routineDescription == null) {
                     showMessage("Schedule generation cancelled.");
                     return;
                 }
 
-                calendarController.generateSchedule(routineDescription, fixedActivities);
+                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
             }
         });
 
@@ -149,17 +142,28 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     // --- GETTER FOR ROUTINE DESCRIPTION ---
     public String getRoutineDescription() {
-        // TODO: Replace with your actual text field / textarea
         // For now, we pop up a simple input (temporary)
         return JOptionPane.showInputDialog(this, "Describe your routine:");
     }
 
     // --- GETTER FOR FIXED ACTIVITIES ---
     public Map<String, String> getFixedActivities() {
-        // TODO: Replace with inputs you collect from your UI
-        // For now, return empty until ActivitiesPanel is integrated
-        return new HashMap<>();
+        Map<String, String> fixed = new HashMap<>();
+
+        for (plan4life.entities.Activity a : currentSchedule.getTasks()) {
+            if (a.isFixed()) {
+                // key example: "Gym"
+                // value example: "14:00:1.5"
+                fixed.put(a.getDescription(), a.getStartTime() + ":" + a.getDuration());
+            }
+        }
+        return fixed;
     }
+
+    public List<String> getFreeActivities() {
+        return activityPanel.getFreeActivities();
+    }
+
 
     public CalendarFrame(BlockOffTimeController blockOffTimeController) {
         this((SetPreferencesInputBoundary) null);
@@ -284,17 +288,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
      * - create an Event and open the reminder dialog (Use Case 7).
      */
     @Override
-    public void onTimeSelected(LocalDateTime start,
-                               LocalDateTime end,
-                               int scheduleId,
-                               int columnIndex) {
-        String description = JOptionPane.showInputDialog(
-                this,
-                "Optional description for this blocked time:"
-        );
+    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
+        String description = JOptionPane.showInputDialog(this,
+                "Optional description for this blocked time:");
 
         if (description == null) {
-            // user pressed Cancel: clear the dragged highlight and exit
             calendarPanel.resetDragSelection();
             return;
         }
@@ -331,3 +329,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         }
     }
 }
+
+
+

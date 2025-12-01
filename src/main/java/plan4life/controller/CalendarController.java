@@ -7,6 +7,9 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
 import plan4life.use_case.lock_activity.LockActivityInputBoundary;
 import plan4life.use_case.lock_activity.LockActivityRequestModel;
+import plan4life.use_case.set_reminder.SetReminderInputBoundary;
+import plan4life.use_case.set_reminder.SetReminderRequestModel;
+
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -43,54 +46,25 @@ public class CalendarController {
 
     /** All events known to the controller (for "apply to all events"). */
     private final List<Event> events = new ArrayList<>();
+    private final SetReminderInputBoundary setReminderInteractor;
+
 
     // =========================================================
     //                       Constructor
     // =========================================================
     public CalendarController(GenerateScheduleInputBoundary generateScheduleInteractor,
-                              LockActivityInputBoundary lockActivityInteractor) {
+                              LockActivityInputBoundary lockActivityInteractor,
+                              SetReminderInputBoundary setReminderInteractor) {
         this.generateScheduleInteractor = generateScheduleInteractor;
         this.lockActivityInteractor = lockActivityInteractor;
+        this.setReminderInteractor = setReminderInteractor;
     }
 
-    // =========================================================
-    //                 Generate schedule (overloads)
-    // =========================================================
-
-    /**
-     * Older/simple version: routine + fixed activities as a single String.
-     * Internally we wrap the text into a small Map so that we can reuse
-     * GenerateScheduleRequestModel(String, Map&lt;String,String&gt;).
-     */
     public void generateSchedule(String routineDescription,
-                                 String fixedActivitiesText) {
-
-        Map<String, String> fixedMap = new HashMap<>();
-        if (fixedActivitiesText != null && !fixedActivitiesText.isBlank()) {
-            // The key name "fixedActivities" is arbitrary; your interactor
-            // simply sees a Map<String,String> and can interpret it as needed.
-            fixedMap.put("fixedActivities", fixedActivitiesText);
-        }
-
-        GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel(routineDescription, fixedMap);
-        generateScheduleInteractor.execute(request);
-    }
-
-    /**
-     * Overload used when callers pass a Map of fixed/blocked information.
-     * This matches GenerateScheduleRequestModel(String, Map&lt;String,String&gt;).
-     */
-    public void generateSchedule(String routineDescription,
-                                 Map<String, String> fixedActivities) {
-
-        // Defensively copy into a HashMap to avoid accidental modification.
-        Map<String, String> copy = (fixedActivities == null)
-                ? new HashMap<>()
-                : new HashMap<>(fixedActivities);
-
-        GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel(routineDescription, copy);
+                                 Map<String, String> fixedActivities,
+                                 List<String>freeActivities) {
+        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription,
+                fixedActivities, freeActivities);
         generateScheduleInteractor.execute(request);
     }
 
@@ -217,6 +191,23 @@ public class CalendarController {
         }, delay);
 
         reminderTimers.put(event, timer);
+        // Persist reminder via use case (optional)
+        if (setReminderInteractor != null) {
+            SetReminderRequestModel request =
+                    new SetReminderRequestModel(
+                            event.getTitle(),
+                            event.getStart(),
+                            event.getEnd(),
+                            minutesBefore,
+                            alertType,
+                            urgencyLevel.name(),
+                            sendMessage,
+                            sendEmail,
+                            playSound,
+                            true
+                    );
+            setReminderInteractor.setReminder(request);
+        }
     }
 
     /**
@@ -279,6 +270,23 @@ public class CalendarController {
         event.setSendMessage(false);
 
         cancelReminderTimer(event);
+
+        if (setReminderInteractor != null) {
+            SetReminderRequestModel request =
+                    new SetReminderRequestModel(
+                            event.getTitle(),
+                            event.getStart(),
+                            event.getEnd(),
+                            0,
+                            null,
+                            null,
+                            false,
+                            false,
+                            false,
+                            false
+                    );
+            setReminderInteractor.cancelReminder(request);
+        }
     }
 
     // =========================================================

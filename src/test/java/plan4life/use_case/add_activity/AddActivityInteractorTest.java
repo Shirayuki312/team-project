@@ -7,6 +7,7 @@ import plan4life.entities.Schedule;
 import plan4life.data_access.ScheduleDataAccessInterface;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -118,5 +119,55 @@ class AddActivityInteractorTest {
 
         // Presenter was called with last response
         assertEquals(response2, presenter.getLastResponse());
+    }
+
+    @Test
+    void testResponseModelStoresValuesCorrectly() {
+        Schedule schedule = new Schedule(2, "day");
+        Activity activity = new Activity("Test Activity", 1.0f);
+
+        AddActivityResponseModel response = new AddActivityResponseModel(
+                true,
+                "Success",
+                List.of(activity),
+                schedule
+        );
+
+        assertTrue(response.isSuccess());
+        assertEquals("Success", response.getMessage());
+        assertEquals(List.of(activity), response.getUpdatedActivities());
+        assertEquals(schedule, response.getUpdatedSchedule());
+    }
+
+    @Test
+    void testResponseModelHandlesEmptyActivityList() {
+        Schedule schedule = new Schedule(3, "day");
+
+        AddActivityResponseModel response = new AddActivityResponseModel(
+                false,
+                "No activities",
+                List.of(),
+                schedule
+        );
+
+        assertFalse(response.isSuccess());
+        assertEquals("No activities", response.getMessage());
+        assertTrue(response.getUpdatedActivities().isEmpty());
+        assertEquals(schedule, response.getUpdatedSchedule());
+    }
+
+    @Test
+    void testResponseModelAllowsNullValues() {
+        AddActivityResponseModel response = new AddActivityResponseModel(
+                false,
+                null,
+                null,
+                null
+        );
+
+        assertFalse(response.isSuccess());
+        assertNull(response.getMessage());
+        assertNull(response.getUpdatedActivities());
+        assertNull(response.getUpdatedSchedule());
     }
 }

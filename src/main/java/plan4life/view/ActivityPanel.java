@@ -23,4 +23,17 @@ public class ActivityPanel extends JPanel {
         add(inputPanel, BorderLayout.NORTH);
         add(listScroll, BorderLayout.CENTER);
     }
+
+    /**
+     * Display the activities that were placed on the calendar so testers can scan them quickly.
+     */
+    public void setActivities(Iterable<String> activities) {
+        activityListModel.clear();
+        if (activities == null) {
+            return;
+        }
+        for (String activity : activities) {
+            activityListModel.addElement(activity);
+        }
+    }
 }

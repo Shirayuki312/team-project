@@ -1,0 +1,24 @@
+[
+  {
+    "routineSummary": "Undergraduate balancing CS courses, part-time tutoring, and daily workouts.",
+    "rationale": "Mixes classes with recovery time and locks tutoring sessions in evenings.",
+    "schedule": [
+      {"day": "MONDAY", "startTime": "09:00", "durationMinutes": 60, "name": "Algorithms lecture", "locked": false},
+      {"day": "MONDAY", "startTime": "11:00", "durationMinutes": 90, "name": "Study: data structures", "locked": false},
+      {"day": "MONDAY", "startTime": "17:00", "durationMinutes": 60, "name": "Tutoring shift", "locked": true},
+      {"day": "TUESDAY", "startTime": "07:30", "durationMinutes": 45, "name": "Gym: strength", "locked": false},
+      {"day": "TUESDAY", "startTime": "14:00", "durationMinutes": 120, "name": "Systems lab", "locked": false}
+    ]
+  },
+  {
+    "routineSummary": "New grad software engineer with morning standups, code review blocks, and evening choir practice.",
+    "rationale": "Protects collaborative meetings while leaving deep work before lunch.",
+    "schedule": [
+      {"day": "MONDAY", "startTime": "09:30", "durationMinutes": 30, "name": "Team standup", "locked": true},
+      {"day": "MONDAY", "startTime": "10:00", "durationMinutes": 120, "name": "Deep work: feature ticket", "locked": false},
+      {"day": "TUESDAY", "startTime": "13:00", "durationMinutes": 60, "name": "Code reviews", "locked": true},
+      {"day": "WEDNESDAY", "startTime": "18:30", "durationMinutes": 90, "name": "Community choir practice", "locked": true},
+      {"day": "THURSDAY", "startTime": "16:00", "durationMinutes": 60, "name": "Product sync", "locked": true}
+    ]
+  }
+]

@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Merge branch 'main' of https://github.com/Shirayuki312/team-project&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Added back lock icon">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +69,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "lock__icon",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "node.js.detected.package.eslint": "true",
@@ -162,11 +162,23 @@
       <option name="project" value="LOCAL" />
       <updated>1764546319231</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Added back lock icon">
+      <option name="closed" value="true" />
+      <created>1764613680633</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1764613680633</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added back lock icon" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added back lock icon" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">

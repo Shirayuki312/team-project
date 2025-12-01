@@ -97,7 +97,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         inputGrid.add(fixedPanel);
 
         JPanel generatorInputPanel = new JPanel(new BorderLayout(10, 10));
-        generatorInputPanel.setBorder(BorderFactory.createTitledBorder("Schedule Inputs"));
+        // Add a bit of padding so the inputs feel less cramped.
+        generatorInputPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Schedule Inputs"),
+                BorderFactory.createEmptyBorder(6, 6, 6, 6)));
         generatorInputPanel.add(inputGrid, BorderLayout.CENTER);
 
         // <--- Calendar Panel --->
@@ -238,6 +241,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                     random.nextInt(156) + 100);
             calendarPanel.colorCell(time, color, activityName, isLocked);
         });
+
+        activityPanel.setActivities(schedule.getActivities().values());
 
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {

@@ -46,3 +46,4 @@ public class Activity {
     public String getStartTime() { return startTime; }
     public Integer getDayIndex() { return dayIndex; }
 }
+

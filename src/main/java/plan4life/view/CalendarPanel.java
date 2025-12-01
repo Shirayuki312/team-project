@@ -6,10 +6,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 public class CalendarPanel extends JPanel {
     private JPanel[][] cells;
+    private JPanel gridPanel;
+    private JPanel dayHeaderPanel;
+    private JPanel timeLabelPanel;
     private int currentColumns = 7;
 
     private int startRow = -1;
@@ -29,8 +34,25 @@ public class CalendarPanel extends JPanel {
         currentColumns = columns;
         int rows = 24;
 
-        // Each component added to a GridLayout fills the next cell in the grid (left to right, then top to bottom)
-        setLayout(new GridLayout(rows, columns, 2, 2));
+        // Wrap grid with headers so users can see day labels across the top and hour labels on the left.
+        setLayout(new BorderLayout(4, 4));
+
+        dayHeaderPanel = new JPanel(new GridLayout(1, columns + 1));
+        dayHeaderPanel.add(new JLabel("")); // empty corner so headers align with hour labels
+        for (int c = 0; c < columns; c++) {
+            JLabel dayLabel = new JLabel(getDayLabel(c), SwingConstants.CENTER);
+            dayLabel.setFont(dayLabel.getFont().deriveFont(Font.BOLD));
+            dayHeaderPanel.add(dayLabel);
+        }
+
+        timeLabelPanel = new JPanel(new GridLayout(rows, 1));
+        for (int hour = 0; hour < rows; hour++) {
+            JLabel hourLabel = new JLabel(String.format("%02d:00", hour), SwingConstants.RIGHT);
+            hourLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+            timeLabelPanel.add(hourLabel);
+        }
+
+        gridPanel = new JPanel(new GridLayout(rows, columns, 2, 2));
         cells = new JPanel[rows][columns];
 
         for (int hour = 0; hour < rows; hour++) {
@@ -39,11 +61,11 @@ public class CalendarPanel extends JPanel {
                 cell.setBackground(Color.WHITE);
                 cell.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
                 cells[hour][day] = cell;
-                add(cell);
+                gridPanel.add(cell);
             }
         }
 
-        addMouseListener(new MouseAdapter() {
+        gridPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 dragging = true;
@@ -85,7 +107,7 @@ public class CalendarPanel extends JPanel {
             }
         });
 
-        addMouseMotionListener(new MouseAdapter() {
+        gridPanel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (dragging) {
@@ -97,6 +119,10 @@ public class CalendarPanel extends JPanel {
                 }
             }
         });
+
+        add(dayHeaderPanel, BorderLayout.NORTH);
+        add(timeLabelPanel, BorderLayout.WEST);
+        add(gridPanel, BorderLayout.CENTER);
 
         revalidate();
         repaint();
@@ -117,7 +143,7 @@ public class CalendarPanel extends JPanel {
     }
 
     private int getColumnFromX(int x) {
-        int cellWidth = getWidth() / currentColumns;
+        int cellWidth = gridPanel.getWidth() / currentColumns;
         return Math.max(0, Math.min(currentColumns - 1, x / cellWidth));
     }
 
@@ -167,24 +193,39 @@ public class CalendarPanel extends JPanel {
 
     public void colorCell(String time, Color color, String label, boolean locked) {
         try {
-            // Assuming time corresponds to the first column's row index mapping logic you already have
-            int hour = Integer.parseInt(time.split(" ")[1].split(":")[0]); // crude, adapt to your keys
-            int columnIndex = 0; // if using daily view otherwise compute from day name
+            ParsedTimeKey parsed = parseTimeKey(time);
+            if (parsed == null) {
+                System.out.printf("[CalendarPanel] Unable to parse time key: %s%n", time);
+                return;
+            }
 
-            JPanel cell = cells[hour][columnIndex];
+            int columnIndex = currentColumns == 1 ? 0 : parsed.columnIndex;
+            if (columnIndex < 0 || columnIndex >= currentColumns) {
+                System.out.printf("[CalendarPanel] Column index out of bounds for %s -> %d%n", time, columnIndex);
+                return;
+            }
+
+            JPanel cell = cells[parsed.hour][columnIndex];
             cell.removeAll();
             cell.setBackground(color);
             cell.setLayout(new BorderLayout());
 
-            JLabel title = new JLabel(label, SwingConstants.CENTER);
+            String displayLabel = label != null && label.length() > 18
+                    ? label.substring(0, 17) + "…"
+                    : label;
+            JLabel title = new JLabel(displayLabel, SwingConstants.CENTER);
             title.setOpaque(false);
+            title.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+            if (label != null) {
+                title.setToolTipText(label);
+            }
             cell.add(title, BorderLayout.CENTER);
 
-            // Create a small lock label on EAST
-            String lockText = locked ? "\uD83D\uDD12" : "\uD83D\uDD13"; // 🔒 vs 🔓 unicode (had to google it, might be wrong)
+            String lockText = locked ? "\uD83D\uDD12" : "\uD83D\uDD13";
             JLabel lockLabel = new JLabel(lockText);
             lockLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             lockLabel.setBorder(BorderFactory.createEmptyBorder(2,6,2,6));
+            lockLabel.setToolTipText(locked ? "Fixed: cannot be moved" : "Click to lock this slot");
             lockLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -195,7 +236,61 @@ public class CalendarPanel extends JPanel {
             cell.add(lockLabel, BorderLayout.EAST);
             cell.revalidate();
             cell.repaint();
-        } catch (Exception ignored) {}
+
+            System.out.printf("[CalendarPanel] colorCell %s -> row %d, col %d, locked=%s%n", time, parsed.hour, columnIndex, locked);
+        } catch (Exception ex) {
+            System.out.printf("[CalendarPanel] Failed to color cell for %s due to %s%n", time, ex.getMessage());
+        }
+    }
+
+    private ParsedTimeKey parseTimeKey(String time) {
+        if (time == null || !time.contains(" ")) {
+            return null;
+        }
+        String[] parts = time.split(" ");
+        if (parts.length < 2) {
+            return null;
+        }
+        String dayToken = parts[0].trim().toUpperCase(Locale.ROOT);
+        String timeToken = parts[1].trim();
+
+        DayOfWeek day = switch (dayToken) {
+            case "MON", "MONDAY" -> DayOfWeek.MONDAY;
+            case "TUE", "TUESDAY" -> DayOfWeek.TUESDAY;
+            case "WED", "WEDNESDAY" -> DayOfWeek.WEDNESDAY;
+            case "THU", "THURSDAY" -> DayOfWeek.THURSDAY;
+            case "FRI", "FRIDAY" -> DayOfWeek.FRIDAY;
+            case "SAT", "SATURDAY" -> DayOfWeek.SATURDAY;
+            case "SUN", "SUNDAY" -> DayOfWeek.SUNDAY;
+            default -> null;
+        };
+        if (day == null) {
+            return null;
+        }
+
+        String[] timeParts = timeToken.split(":");
+        int hour = Integer.parseInt(timeParts[0]);
+        int columnIndex = day.getValue() - 1;
+        return new ParsedTimeKey(hour, columnIndex);
+    }
+
+    private static class ParsedTimeKey {
+        final int hour;
+        final int columnIndex;
+
+        ParsedTimeKey(int hour, int columnIndex) {
+            this.hour = hour;
+            this.columnIndex = columnIndex;
+        }
+    }
+
+    private String getDayLabel(int columnIndex) {
+        if (currentColumns == 1) {
+            return "Day";
+        }
+
+        DayOfWeek day = DayOfWeek.of((columnIndex % 7) + 1);
+        return day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault());
     }
 
 

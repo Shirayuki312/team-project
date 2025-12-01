@@ -239,7 +239,8 @@ public class CalendarPanel extends JPanel {
                 cell.setBackground(color);
                 cell.removeAll();
                 cell.setLayout(new BorderLayout());
-                String lockText = isLocked ? "\uD83D\uDD12" : "\uD83D\uDD13"; // 🔒 vs 🔓 Unicode (had to google it, might be wrong)
+                String lockText = isLocked ? "\uD83D\uDD12" : "\uD83D\uDD13";
+                // 🔒 and 🔓 Unicode (had to google it, might be wrong)
                 JLabel lockLabel = new JLabel(lockText);
                 lockLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 lockLabel.setBorder(BorderFactory.createEmptyBorder(2,6,2,6));

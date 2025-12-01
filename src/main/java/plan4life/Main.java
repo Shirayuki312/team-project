@@ -3,6 +3,10 @@ package plan4life;
 import plan4life.controller.CalendarController;
 import plan4life.data_access.*;
 import plan4life.entities.Schedule;
+import plan4life.ai.LlmScheduleService;
+import plan4life.ai.PromptBuilder;
+import plan4life.ai.RagRetriever;
+import plan4life.solver.ConstraintSolver;
 import plan4life.presenter.CalendarPresenter;
 import plan4life.use_case.block_off_time.*;
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
@@ -30,7 +34,15 @@ public class Main {
 
             // Added GenerateSchedule and LockActivity to main. GenerateSchedule still needs work, needs to take 1 more input
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
-            GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(schedulePresenter);
+            RagRetriever ragRetriever = new RagRetriever();
+            PromptBuilder promptBuilder = new PromptBuilder(ragRetriever);
+            LlmScheduleService llmScheduleService = new LlmScheduleService(promptBuilder);
+            ConstraintSolver constraintSolver = new ConstraintSolver();
+            GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(
+                    schedulePresenter,
+                    ragRetriever,
+                    llmScheduleService,
+                    constraintSolver);
 
             LockActivityOutputBoundary lock_presenter = new CalendarPresenter(view);
             LockActivityInputBoundary lock_interactor = new LockActivityInteractor(lock_presenter, scheduleDAO);

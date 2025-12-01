@@ -92,7 +92,7 @@ public class Main {
 
             LockActivityOutputBoundary lockPresenter = new CalendarPresenter(view);
             LockActivityInputBoundary lockInteractor =
-                    new LockActivityInteractor(lockPresenter, scheduleDAO, generator);
+                    new LockActivityInteractor(lockPresenter, scheduleDAO);
 
             CalendarController calendarController =
                     new CalendarController(scheduleInput, lockInteractor);

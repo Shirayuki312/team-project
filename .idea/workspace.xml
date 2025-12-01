@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Added back lock icon">
+    <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Adjusted ActivityPanel size">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/ActivityPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/lock_activity/LockActivityInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/lock_activity/LockActivityInteractor.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/view/CalendarPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/lock_activity/LockActivityInteractorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +63,7 @@
     "JUnit.AddActivityInteractorTest.executor": "Run",
     "JUnit.GenerateScheduleInteractorTest.executor": "Coverage",
     "JUnit.GenerateScheduleInteractorTest.testGenerateCreatesSchedule.executor": "Debug",
-    "JUnit.LockActivityInteractorTest.executor": "Coverage",
+    "JUnit.LockActivityInteractorTest.executor": "Run",
     "JUnit.MockScheduleGenerationServiceTest.executor": "Coverage",
     "JUnit.SetPreferencesInteractorTest.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -84,7 +86,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.Unnamed">
+  <component name="RunManager" selected="JUnit.LockActivityInteractorTest">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
@@ -124,8 +126,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.GenerateScheduleInteractorTest" />
         <item itemvalue="JUnit.LockActivityInteractorTest" />
+        <item itemvalue="JUnit.GenerateScheduleInteractorTest" />
       </list>
     </recent_temporary>
   </component>
@@ -170,7 +172,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764613680633</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Adjusted ActivityPanel size">
+      <option name="closed" value="true" />
+      <created>1764614900511</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1764614900511</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -178,7 +188,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added back lock icon" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added back lock icon" />
+    <MESSAGE value="Adjusted ActivityPanel size" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adjusted ActivityPanel size" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
@@ -190,11 +201,11 @@
     <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$LockActivityInteractorTest.ic" NAME="LockActivityInteractorTest Coverage Results" MODIFIED="1764605043297" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.lock_activity.*</FILTER>
-    </SUITE>
     <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764605103112" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$LockActivityInteractorTest.ic" NAME="LockActivityInteractorTest Coverage Results" MODIFIED="1764617368251" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.lock_activity.*</FILTER>
     </SUITE>
   </component>
 </project>

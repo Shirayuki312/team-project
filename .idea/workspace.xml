@@ -5,13 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75c16aca-c130-47ab-8de2-de116a692356" name="Changes" comment="Merge branch 'main' of https://github.com/Shirayuki312/team-project&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/plan4life/use_case/set_preferences/SetPreferencesInteractorTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/controller/SettingsController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInputBoundary.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesInteractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/set_preferences/SetPreferencesOutputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeInteractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeOutputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeOutputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeRequestModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeRequestModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeResponseModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/plan4life/use_case/block_off_time/BlockOffTimeResponseModel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,12 +38,12 @@
     &quot;assignee&quot;: &quot;MihirP30&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Shirayuki312/team-project.git",
-    "accountId": "440b792c-6e3c-428c-9da6-a32d99f39647"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Shirayuki312/team-project.git&quot;,
+    &quot;accountId&quot;: &quot;440b792c-6e3c-428c-9da6-a32d99f39647&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -73,7 +71,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "BOT__code__refactoring",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/mihirpullakhandam/IdeaProjects/team-project",
     "node.js.detected.package.eslint": "true",
@@ -88,7 +86,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Unnamed">
     <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="plan4life.Main" />
       <module name="TeamProject" />
@@ -156,18 +154,29 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.block_off_time.*</FILTER>
-    </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeInteractorTest.ic" NAME="BlockOffTimeInteractorTest Coverage Results" MODIFIED="1764538883918" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeInteractorTest.ic" NAME="BlockOffTimeInteractorTest Coverage Results" MODIFIED="1764539316496" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.block_off_time.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764541785853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+    <SUITE FILE_PATH="coverage/team_project$GenerateScheduleInteractorTest.ic" NAME="GenerateScheduleInteractorTest Coverage Results" MODIFIED="1764545614317" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.generate_schedule.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$Unnamed.ic" NAME="Unnamed Coverage Results" MODIFIED="1764542709096" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
+    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539309646" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.block_off_time.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$AddActivityInteractorTest.ic" NAME="AddActivityInteractorTest Coverage Results" MODIFIED="1764546742852" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.add_activity.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/team_project$AddActivityControllerTest.ic" NAME="AddActivityControllerTest Coverage Results" MODIFIED="1764546737068" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>plan4life.use_case.add_activity.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/team_project$LockActivityInteractorTest.ic" NAME="LockActivityInteractorTest Coverage Results" MODIFIED="1764546597502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.lock_activity.*</FILTER>

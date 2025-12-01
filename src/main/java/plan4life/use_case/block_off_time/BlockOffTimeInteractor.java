@@ -29,6 +29,12 @@ public class BlockOffTimeInteractor implements BlockOffTimeInputBoundary {
         this.presenter = presenterInput;
     }
 
+    /**
+     * Executes the block-off-time use case.
+     *
+     * @param requestModel the request data for blocking time
+     * @return the response model containing success status and results
+     */
     @Override
     public BlockOffTimeResponseModel execute(
             final BlockOffTimeRequestModel requestModel) {
@@ -47,9 +53,12 @@ public class BlockOffTimeInteractor implements BlockOffTimeInputBoundary {
                 requestModel.getStart(),
                 requestModel.getEnd(),
                 requestModel.getColumnIndex())) {
-            return fail("The selected time overlaps with an existing blocked period.");
+            return fail("The selected time overlaps with "
+                    + "an existing blocked period.");
         }
-        schedule.removeOverlappingActivities(requestModel.getStart(), requestModel.getEnd());
+        schedule.removeOverlappingActivities(
+                requestModel.getStart(),
+                requestModel.getEnd());
 
         // Create and add new BlockedTime to the schedule
         BlockedTime newBlock = new BlockedTime(
@@ -73,13 +82,16 @@ public class BlockOffTimeInteractor implements BlockOffTimeInputBoundary {
         return response;
     }
 
-    private BlockOffTimeResponseModel fail(String message) {
-        BlockOffTimeResponseModel response = new BlockOffTimeResponseModel(false, message, List.of(), null); // List.of() is an empty immutable list
+    private BlockOffTimeResponseModel fail(final String message) {
+        BlockOffTimeResponseModel response = new BlockOffTimeResponseModel(
+                false,
+                message, List.of(),
+                null);
         presenter.present(response);
         return response;
     }
 
-    private boolean isValidTimeRange(BlockOffTimeRequestModel request) {
+    private boolean isValidTimeRange(final BlockOffTimeRequestModel request) {
         return request.getEnd().isAfter(request.getStart());
     }
 }

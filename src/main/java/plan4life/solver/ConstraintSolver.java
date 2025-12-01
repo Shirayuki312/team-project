@@ -11,13 +11,16 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.OptionalInt;
+import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A greedy, grid-based scheduler that places events on a 7x24 canvas.
@@ -30,13 +33,19 @@ public class ConstraintSolver {
     private static final int DAYS_IN_WEEK = 7;
 
     private final LocalDate weekStart;
+    private final Random random;
 
     public ConstraintSolver() {
-        this(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)));
+        this(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)), new Random());
     }
 
     public ConstraintSolver(LocalDate weekStart) {
+        this(weekStart, new Random());
+    }
+
+    public ConstraintSolver(LocalDate weekStart, Random random) {
         this.weekStart = weekStart;
+        this.random = random;
     }
 
     /**
@@ -63,7 +72,6 @@ public class ConstraintSolver {
             return schedule;
         }
 
-        // Deterministic order: by day then start time.
         List<ProposedEvent> ordered = new ArrayList<>(proposedEvents);
         ordered.sort(Comparator
                 .comparing(ProposedEvent::getDay)
@@ -76,10 +84,14 @@ public class ConstraintSolver {
             }
         }
 
-        for (ProposedEvent event : ordered) {
-            if (!event.isLocked()) {
-                placeFlexibleEvent(schedule, occupancy, event);
-            }
+        List<ProposedEvent> flexible = ordered.stream()
+                .filter(event -> !event.isLocked())
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(flexible, random);
+        System.out.printf("[ConstraintSolver] placing %d flexible events in randomized order.%n", flexible.size());
+
+        for (ProposedEvent event : flexible) {
+            placeFlexibleEvent(schedule, occupancy, event);
         }
 
         return schedule;
@@ -102,6 +114,8 @@ public class ConstraintSolver {
         String timeKey = formatTimeKey(event.getDay(), event.getStartTime());
         schedule.addActivity(timeKey, event.getName());
         schedule.lockSlotKey(timeKey);
+
+        System.out.printf("[ConstraintSolver] locked -> %s %s (col %d)%n", event.getDay(), event.getStartTime(), columnIndex);
 
         int startHour = start.getHour();
         int endHour = Math.min(HOURS_IN_DAY, startHour + requiredSlots(event.getDurationMinutes()));
@@ -126,6 +140,8 @@ public class ConstraintSolver {
         schedule.addUnlockedBlock(new ScheduledBlock(start, end, event.getName(), false, columnIndex));
         schedule.addActivity(formatTimeKey(event.getDay(), placementStart), event.getName());
 
+        System.out.printf("[ConstraintSolver] placed -> %s %s (col %d)%n", event.getDay(), placementStart, columnIndex);
+
         int startHour = placementStart.getHour();
         int endHour = Math.min(HOURS_IN_DAY, startHour + requiredSlots);
         markRangeAsOccupied(occupancy, columnIndex, startHour, endHour);
@@ -147,12 +163,24 @@ public class ConstraintSolver {
             }
         }
 
+        List<Integer> freeOptions = new ArrayList<>();
         for (int candidate : candidates) {
             if (isRangeFree(occupancy, columnIndex, candidate, candidate + requiredSlots)) {
-                return OptionalInt.of(candidate);
+                freeOptions.add(candidate);
             }
         }
-        return OptionalInt.empty();
+
+        if (freeOptions.isEmpty()) {
+            return OptionalInt.empty();
+        }
+
+        int limit = Math.min(5, freeOptions.size());
+        int chosen = freeOptions.get(random.nextInt(limit));
+        if (limit > 1) {
+            System.out.printf("[ConstraintSolver] multiple slots available for column %d, pref %d -> chose %d among %d options.%n",
+                    columnIndex, preferredHour, chosen, limit);
+        }
+        return OptionalInt.of(chosen);
     }
 
     private void markRangeAsOccupied(Map<Integer, boolean[]> occupancy, int columnIndex, int startHour, int endHour) {
@@ -192,7 +220,7 @@ public class ConstraintSolver {
     private String formatTimeKey(DayOfWeek day, LocalTime time) {
         String[] abbreviations = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
         String dayName = abbreviations[toColumnIndex(day)];
-        return String.format("%s %d:%02d", dayName, time.getHour(), time.getMinute());
+        return String.format("%s %02d:%02d", dayName, time.getHour(), time.getMinute());
     }
 
     private int requiredSlots(int durationMinutes) {

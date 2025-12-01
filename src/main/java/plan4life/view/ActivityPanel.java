@@ -115,4 +115,13 @@ public class ActivityPanel extends JPanel {
         this.schedule = schedule;
         refreshActivityList();
     }
+    public List<String> getFreeActivities() {
+        List<String> free = new java.util.ArrayList<>();
+        for (Activity a : schedule.getTasks()) {
+            if (!a.isFixed()) {
+                free.add(a.getDescription() + ":" + a.getDuration());
+            }
+        }
+        return free;
+    }
 }

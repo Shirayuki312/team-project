@@ -8,12 +8,17 @@ public class MockScheduleGenerationService implements ScheduleGenerationService 
 
     private static final int DAYS = 7;          // 0–6
     private static final int HOURS_PER_DAY = 24;
+    private int scheduleId = 1; // default
+
+    public void setScheduleId(int id) {
+        this.scheduleId = id;
+    }
 
     @Override
     public Schedule generate(String routineDescription,
                              Map<String, String> fixedActivities) {
 
-        Schedule s = new Schedule(1, "week");
+        Schedule s = new Schedule(scheduleId, "week");
 
         // Step 1: base random schedule
         s.populateRandomly();

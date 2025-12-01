@@ -161,7 +161,7 @@ public class CalendarPanel extends JPanel {
         int c = getColumnFromX(p.x);
         int r = getRowFromY(p.y);
         if (r >= 0 && c >= 0) {
-            String key = (c + 1) + ":" + r;
+            String key = c + ":" + r; // 0-based
             lockListener.onLockToggle(key);
         }
     }
@@ -231,14 +231,25 @@ public class CalendarPanel extends JPanel {
     public void colorCell(String timeKey, Color color, String text, boolean isLocked) {
         try {
             String[] parts = timeKey.split(":");
-            int day = Integer.parseInt(parts[0]) - 1;
-            int hour = Integer.parseInt(parts[1]);
+            int day = Integer.parseInt(parts[0]);    // 0-based already
+            int hour = Integer.parseInt(parts[1]);   // 0–23
 
             if (day >= 0 && day < currentColumns && hour >= 0 && hour < rows) {
                 JPanel cell = cells[hour][day];
                 cell.setBackground(color);
                 cell.removeAll();
                 cell.setLayout(new BorderLayout());
+                String lockText = isLocked ? "\uD83D\uDD12" : "\uD83D\uDD13";
+                // 🔒 and 🔓 Unicode (had to google it, might be wrong)
+                JLabel lockLabel = new JLabel(lockText);
+                lockLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                lockLabel.setBorder(BorderFactory.createEmptyBorder(2,6,2,6));
+                lockLabel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (lockListener != null) lockListener.onLockToggle(timeKey);
+                    }
+                });
                 if (text != null) {
                     JLabel label = new JLabel(text, SwingConstants.CENTER);
                     cell.add(label, BorderLayout.CENTER);
@@ -249,6 +260,7 @@ public class CalendarPanel extends JPanel {
                     boolean isDark = "Dark Mode".equals(currentThemeName);
                     cell.setBorder(BorderFactory.createLineBorder(isDark ? Color.GRAY : Color.LIGHT_GRAY));
                 }
+                cell.add(lockLabel, BorderLayout.EAST);
                 cell.revalidate();
                 cell.repaint();
             }

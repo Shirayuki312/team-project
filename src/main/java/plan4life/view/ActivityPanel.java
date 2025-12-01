@@ -6,6 +6,7 @@ import plan4life.entities.Schedule;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ActivityPanel extends JPanel {
     private Schedule schedule;
@@ -47,12 +48,36 @@ public class ActivityPanel extends JPanel {
     private void showAddActivityForm() {
         JTextField descriptionField = new JTextField(12);
         JTextField durationField = new JTextField(5);
+        JTextField startTimeField = new JTextField(5);  // NEW
 
-        JPanel form = new JPanel(new GridLayout(2, 2, 5, 5));
+        String[] dayOptions = {
+                "Any", "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday"
+        };
+        JComboBox<String> daySelector = new JComboBox<>(dayOptions);
+
+        String[] types = {"Free Activity", "Fixed Activity"};
+        JComboBox<String> typeSelector = new JComboBox<>(types);
+
+        JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
+        form.add(new JLabel("Type:"));
+        form.add(typeSelector);
         form.add(new JLabel("Description:"));
         form.add(descriptionField);
         form.add(new JLabel("Duration (hours):"));
         form.add(durationField);
+        form.add(new JLabel("Start Time (e.g., 14:00):"));
+        form.add(startTimeField);
+        form.add(new JLabel("Day:"));
+        form.add(daySelector);
+
+
+        startTimeField.setEnabled(false);
+
+        typeSelector.addActionListener(e -> {
+            boolean isFixed = typeSelector.getSelectedItem().equals("Fixed Activity");
+            startTimeField.setEnabled(isFixed);
+        });
 
         int result = JOptionPane.showConfirmDialog(
                 this,
@@ -65,26 +90,55 @@ public class ActivityPanel extends JPanel {
         if (result == JOptionPane.OK_OPTION) {
             String desc = descriptionField.getText().trim();
             String durText = durationField.getText().trim();
+            String start = startTimeField.getText().trim();
+            int dayIndex = daySelector.getSelectedIndex() - 1;  // 0 = "No Day"
 
             if (desc.isEmpty() || durText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter both description and duration.");
+                JOptionPane.showMessageDialog(this, "Please enter description and duration.");
                 return;
             }
 
             try {
                 float duration = Float.parseFloat(durText);
-                Activity newActivity = new Activity(desc, duration);
+                Activity newActivity;
 
-                // Add to schedule
+                boolean isFixedType = typeSelector.getSelectedItem().equals("Fixed Activity");
+                boolean hasStart = !start.isEmpty();
+                boolean hasDay = dayIndex >= 0;
+
+                // --------------- FOUR CASES ----------------
+
+                // ① Free activity (no start, no day)
+                if (!isFixedType || (!hasStart && !hasDay)) {
+                    newActivity = new Activity(desc, duration);
+                }
+
+                // ② Fixed start time only
+                else if (hasStart && !hasDay) {
+                    newActivity = new Activity(desc, duration, start);
+                }
+
+                // ③ Fixed day only
+                else if (!hasStart && hasDay) {
+                    newActivity = Activity.withDayOnly(desc, duration, dayIndex);
+                }
+
+                // ④ Fully fixed: day + start time
+                else {
+                    newActivity = new Activity(desc, duration, dayIndex, start);
+                }
+
+                // -------------------------------------------
+
                 schedule.addTask(newActivity);
-
-                // Refresh UI
                 refreshActivityList();
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Duration must be a number.");
             }
         }
     }
+
 
     /** Delete the currently selected activity */
     private void deleteSelectedActivity() {
@@ -106,7 +160,14 @@ public class ActivityPanel extends JPanel {
 
         List<Activity> tasks = schedule.getTasks();
         for (Activity a : tasks) {
-            activityListModel.addElement(a.getDescription() + " (" + a.getDuration() + "h)");
+            if (a.isFixed()) {
+                activityListModel.addElement("[Fixed] " + a.getDescription()
+                        + " at " + a.getStartTime()
+                        + " (" + a.getDuration() + "h)");
+            } else {
+                activityListModel.addElement("[Free] " + a.getDescription()
+                        + " (" + a.getDuration() + "h)");
+            }
         }
     }
 

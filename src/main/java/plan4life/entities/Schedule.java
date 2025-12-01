@@ -6,7 +6,8 @@ import java.util.*;
 public class Schedule {
     private final int scheduleId;
     private final String type;    // "day", "week", etc.
-    private final Map<String, String> activities = new LinkedHashMap<>();    // e.g., "Monday 9 AM" -> "Workout"
+    private final Map<String, String> activities = new LinkedHashMap<>();
+    // Keys are "dayIndex:hour" (e.g., "2:14"), Values are activity description
     private final List<Activity> tasks;
     private final List<ScheduledBlock> unlockedBlocks;
     private final List<ScheduledBlock> lockedBlocks;
@@ -76,36 +77,50 @@ public class Schedule {
         tasks.add(activity);
     }
 
-    public void removeTask(Activity activity) {
-        tasks.remove(activity);
-    }
+    public List<Activity> getTasks() { return tasks; }
 
-    public List<Activity> getTasks() { return Collections.unmodifiableList(tasks); }
+    public void removeTask(Activity activity) { tasks.remove(activity); }
 
     // Reformatted populateRandomly
     public void populateRandomly() {
-        populateRandomly(Collections.emptySet());
-    }
-
-    // New populateRandomly that respects locked keys
-    public void populateRandomly(Set<String> lockedKeys) {
         activities.clear();
-        String[] sampleActivities = {"Work", "Gym", "Lunch", "Relax", "Sleep"};
-        String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri"};
         Random rand = new Random();
+        String[] sampleActivities = {"Work", "Gym", "Study", "Relax", "Sleep"};
 
-        for (String day : days) {
-            for (int i = 9; i <= 17; i += 2) {
-                String time = day + " " + i + ":00";
-                if (lockedKeys != null && lockedKeys.contains(time)) {
-                    // If the old schedule had a locked activity for this time, preserve it if present:
-                    // We'll not overwrite — caller should already have added locked activities into activities map before calling populate.
-                    continue;
+        // 7 days, 24 hours
+        for (int day = 0; day < 7; day++) {
+            for (int hour = 0; hour < 24; hour++) {
+                String key = day + ":" + hour;
+
+                if (lockedSlotKeys.contains(key)) continue;
+
+                // fill sparsely — random 30% chance
+                if (rand.nextFloat() < 0.3f) {
+                    activities.put(key, sampleActivities[rand.nextInt(sampleActivities.length)]);
                 }
-                activities.put(time, sampleActivities[rand.nextInt(sampleActivities.length)]);
             }
         }
     }
+
+    public void populateRandomly(Set<String> lockedKeys) {
+        activities.clear();
+        Random rand = new Random();
+        String[] sampleActivities = {"Work", "Gym", "Study", "Relax", "Sleep"};
+
+        for (int day = 0; day < 7; day++) {
+            for (int hour = 0; hour < 24; hour++) {
+                String key = day + ":" + hour;
+
+                if (lockedKeys != null && lockedKeys.contains(key)) continue;
+                if (lockedSlotKeys.contains(key)) continue;
+
+                if (rand.nextFloat() < 0.3f) {
+                    activities.put(key, sampleActivities[rand.nextInt(sampleActivities.length)]);
+                }
+            }
+        }
+    }
+
 
     public boolean overlapsWithExistingBlocks(LocalDateTime start, LocalDateTime end, int columnIndex) {
         for (BlockedTime block : blockedTimes) {
@@ -158,6 +173,19 @@ public class Schedule {
                 this.activities.put(key, activity);
                 this.lockedSlotKeys.add(key);
             }
+        }
+    }
+
+    public void placeActivity(int dayIndex, int startHour, String description) {
+        String key = dayIndex + ":" + startHour;
+        activities.put(key, description);
+    }
+
+    public void placeActivityDuration(int dayIndex, int startHour, float duration, String description) {
+        int hours = (int)Math.ceil(duration);
+        for (int h = 0; h < hours; h++) {
+            String key = dayIndex + ":" + (startHour + h);
+            activities.put(key, description);
         }
     }
 

@@ -6,6 +6,7 @@ import plan4life.ai.ProposedEvent;
 import plan4life.ai.RagRetriever;
 import plan4life.ai.RoutineEventInput;
 import plan4life.entities.Schedule;
+import plan4life.data_access.ScheduleDataAccessInterface;
 import plan4life.solver.ConstraintSolver;
 
 import java.time.DayOfWeek;
@@ -24,6 +25,7 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
     private final RagRetriever ragRetriever;
     private final LlmScheduleService llmScheduleService;
     private final ConstraintSolver constraintSolver;
+    private final ScheduleDataAccessInterface scheduleDAO;
 
     private static final int EXAMPLE_COUNT = 2;
     private static final Pattern FIXED_EVENT_PATTERN = Pattern.compile(
@@ -33,11 +35,13 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
     public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter,
                                       RagRetriever ragRetriever,
                                       LlmScheduleService llmScheduleService,
-                                      ConstraintSolver constraintSolver) {
+                                      ConstraintSolver constraintSolver,
+                                      ScheduleDataAccessInterface scheduleDAO) {
         this.presenter = presenter;
         this.ragRetriever = ragRetriever;
         this.llmScheduleService = llmScheduleService;
         this.constraintSolver = constraintSolver;
+        this.scheduleDAO = scheduleDAO;
     }
 
     @Override
@@ -45,6 +49,8 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
         String routineSummary = requestModel.getRoutineDescription();
         List<FixedEventInput> fixedEvents = parseFixedEvents(requestModel.getFixedActivities());
         List<RoutineEventInput> routineEvents = Collections.emptyList();
+
+        System.out.printf("[GenerateScheduleInteractor] fixed events parsed: %d%n", fixedEvents.size());
 
         if ((routineSummary == null || routineSummary.isBlank()) && fixedEvents.isEmpty()) {
             presenter.present(new GenerateScheduleResponseModel(null,
@@ -56,27 +62,45 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             List<RagRetriever.RoutineExample> examples = ragRetriever.retrieveExamples(routineSummary, EXAMPLE_COUNT);
             List<ProposedEvent> proposals = llmScheduleService.proposeSchedule(routineSummary, routineEvents, fixedEvents, examples);
 
+            System.out.printf("[GenerateScheduleInteractor] proposals returned: %d%n", proposals == null ? 0 : proposals.size());
+            LlmScheduleService.LastCallInfo lastCall = llmScheduleService.getLastCallInfo();
+            System.out.printf("[GenerateScheduleInteractor] generation mode: %s%n",
+                    lastCall != null && lastCall.usedLiveModel() ? "live AI" : "fallback / heuristic");
+
             Schedule schedule = constraintSolver.solve(2, "week", proposals, Collections.emptyList());
-            presenter.present(new GenerateScheduleResponseModel(schedule, buildGenerationMessage(schedule)));
+            scheduleDAO.saveSchedule(schedule);
+            presenter.present(new GenerateScheduleResponseModel(schedule,
+                    buildGenerationMessage(schedule, llmScheduleService.getLastCallInfo())));
         } catch (Exception ex) {
             presenter.present(new GenerateScheduleResponseModel(null,
                     "Unable to generate a schedule right now. Please try again."));
         }
     }
 
-    private String buildGenerationMessage(Schedule schedule) {
+    private String buildGenerationMessage(Schedule schedule, LlmScheduleService.LastCallInfo lastCallInfo) {
         if (schedule == null) {
             return "No plan was generated.";
         }
         boolean hasActivities = !schedule.getActivities().isEmpty();
         boolean hasPlacedBlocks = !schedule.getLockedBlocks().isEmpty() || !schedule.getUnlockedBlocks().isEmpty();
         if (!hasActivities && !hasPlacedBlocks) {
-            return "No plan could be generated for the provided details.";
+            return appendSource("No plan could be generated for the provided details.", lastCallInfo);
         }
         if (!schedule.getUnplacedActivities().isEmpty()) {
-            return "Some activities could not be placed and were left unassigned.";
+            return appendSource("Some activities could not be placed and were left unassigned.", lastCallInfo);
         }
-        return null;
+        return appendSource(null, lastCallInfo);
+    }
+
+    private String appendSource(String base, LlmScheduleService.LastCallInfo lastCallInfo) {
+        if (lastCallInfo == null) {
+            return base;
+        }
+        String source = lastCallInfo.asUserMessage();
+        if (base == null || base.isBlank()) {
+            return source;
+        }
+        return base + "\n" + source;
     }
 
     private List<FixedEventInput> parseFixedEvents(String fixedActivities) {

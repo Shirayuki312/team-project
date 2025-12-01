@@ -55,6 +55,13 @@ public class LlmScheduleService {
     public List<ProposedEvent> proposeSchedule(String routineSummary,
                                                List<RoutineEventInput> routineEvents,
                                                List<FixedEventInput> fixedEvents) {
+        return proposeSchedule(routineSummary, routineEvents, fixedEvents, null);
+    }
+
+    public List<ProposedEvent> proposeSchedule(String routineSummary,
+                                               List<RoutineEventInput> routineEvents,
+                                               List<FixedEventInput> fixedEvents,
+                                               List<RagRetriever.RoutineExample> examples) {
         String apiKey = System.getenv("HUGGINGFACE_API_KEY");
         String model = Optional.ofNullable(System.getenv("HUGGINGFACE_MODEL_ID"))
                 .filter(id -> !id.isBlank())
@@ -64,7 +71,7 @@ public class LlmScheduleService {
             return fallbackSchedule(routineEvents, fixedEvents);
         }
 
-        String prompt = promptBuilder.buildSchedulePrompt(routineSummary, routineEvents, fixedEvents, EXAMPLE_COUNT);
+        String prompt = promptBuilder.buildSchedulePrompt(routineSummary, routineEvents, fixedEvents, EXAMPLE_COUNT, examples);
         try {
             String responseJson = callHuggingFace(prompt, apiKey, model);
             List<ProposedEvent> parsed = parseProposedEvents(responseJson);

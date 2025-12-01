@@ -46,11 +46,37 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
         List<FixedEventInput> fixedEvents = parseFixedEvents(requestModel.getFixedActivities());
         List<RoutineEventInput> routineEvents = Collections.emptyList();
 
-        List<RagRetriever.RoutineExample> examples = ragRetriever.retrieveExamples(routineSummary, EXAMPLE_COUNT);
-        List<ProposedEvent> proposals = llmScheduleService.proposeSchedule(routineSummary, routineEvents, fixedEvents, examples);
+        if ((routineSummary == null || routineSummary.isBlank()) && fixedEvents.isEmpty()) {
+            presenter.present(new GenerateScheduleResponseModel(null,
+                    "Please describe your routine or add at least one fixed activity."));
+            return;
+        }
 
-        Schedule schedule = constraintSolver.solve(2, "week", proposals, Collections.emptyList());
-        presenter.present(new GenerateScheduleResponseModel(schedule));
+        try {
+            List<RagRetriever.RoutineExample> examples = ragRetriever.retrieveExamples(routineSummary, EXAMPLE_COUNT);
+            List<ProposedEvent> proposals = llmScheduleService.proposeSchedule(routineSummary, routineEvents, fixedEvents, examples);
+
+            Schedule schedule = constraintSolver.solve(2, "week", proposals, Collections.emptyList());
+            presenter.present(new GenerateScheduleResponseModel(schedule, buildGenerationMessage(schedule)));
+        } catch (Exception ex) {
+            presenter.present(new GenerateScheduleResponseModel(null,
+                    "Unable to generate a schedule right now. Please try again."));
+        }
+    }
+
+    private String buildGenerationMessage(Schedule schedule) {
+        if (schedule == null) {
+            return "No plan was generated.";
+        }
+        boolean hasActivities = !schedule.getActivities().isEmpty();
+        boolean hasPlacedBlocks = !schedule.getLockedBlocks().isEmpty() || !schedule.getUnlockedBlocks().isEmpty();
+        if (!hasActivities && !hasPlacedBlocks) {
+            return "No plan could be generated for the provided details.";
+        }
+        if (!schedule.getUnplacedActivities().isEmpty()) {
+            return "Some activities could not be placed and were left unassigned.";
+        }
+        return null;
     }
 
     private List<FixedEventInput> parseFixedEvents(String fixedActivities) {

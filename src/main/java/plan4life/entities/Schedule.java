@@ -77,6 +77,13 @@ public class Schedule {
         lockedSlotKeys.add(timeKey);
     }
 
+    public void replaceLockedSlotKeys(Set<String> newLockedKeys) {
+        lockedSlotKeys.clear();
+        if (newLockedKeys != null) {
+            lockedSlotKeys.addAll(newLockedKeys);
+        }
+    }
+
     public void unlockSlotKey(String timeKey) {
         if (timeKey == null) return;
         lockedSlotKeys.remove(timeKey);

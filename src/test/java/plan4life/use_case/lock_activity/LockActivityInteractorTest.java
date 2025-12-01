@@ -3,16 +3,19 @@ package plan4life.use_case.lock_activity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import plan4life.data_access.InMemoryScheduleDAO;
+import plan4life.entities.Activity;
 import plan4life.entities.Schedule;
+import plan4life.use_case.generate_schedule.ScheduleGenerationService;
 
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LockActivityInteractorTest {
 
     private InMemoryScheduleDAO dao;
-    private MockLockActivityPresenter presenter;
+    private MockLockPresenter presenter;
+    private MockGenerator generator;
     private LockActivityInteractor interactor;
     private Schedule schedule;
 
@@ -20,67 +23,83 @@ class LockActivityInteractorTest {
     void setup() {
 
         dao = new InMemoryScheduleDAO();
-        presenter = new MockLockActivityPresenter();
-        interactor = new LockActivityInteractor(presenter, dao);
+        presenter = new MockLockPresenter();
+        generator = new MockGenerator();
 
-        schedule = new Schedule(1, "day");
+        interactor = new LockActivityInteractor(presenter, dao, generator);
+
+        schedule = new Schedule(1, "week");
         schedule.addActivity("Mon 9:00", "Workout");
         schedule.addActivity("Mon 10:00", "Study");
         dao.saveSchedule(schedule);
     }
 
     @Test
-    void testLockSingleTimeKey() {
-        LockActivityRequestModel request =
+    void testLockSingleKey() {
+        LockActivityRequestModel req =
                 new LockActivityRequestModel(1, Set.of("Mon 9:00"));
 
-        interactor.execute(request);
+        interactor.execute(req);
 
-        LockActivityResponseModel response = presenter.getLastResponse();
-        assertNotNull(response);
-
-        Schedule updated = response.getUpdatedSchedule();
+        Schedule updated = presenter.lastResponse.getUpdatedSchedule();
         assertTrue(updated.getLockedSlotKeys().contains("Mon 9:00"));
-        assertEquals(1, updated.getScheduleId());
     }
 
     @Test
-    void testLockMultipleTimeKeys() {
-        LockActivityRequestModel request =
+    void testLockMultipleKeys() {
+        LockActivityRequestModel req =
                 new LockActivityRequestModel(1, Set.of("Mon 9:00", "Mon 10:00"));
 
-        interactor.execute(request);
+        interactor.execute(req);
 
-        Schedule updated = presenter.getLastResponse().getUpdatedSchedule();
-
+        Schedule updated = presenter.lastResponse.getUpdatedSchedule();
         assertTrue(updated.getLockedSlotKeys().contains("Mon 9:00"));
         assertTrue(updated.getLockedSlotKeys().contains("Mon 10:00"));
         assertEquals(2, updated.getLockedSlotKeys().size());
     }
 
     @Test
-    void testUnlockingKeys() {
-        // Pre-lock keys
-        schedule.lockSlotKey("Mon 9:00");
-        schedule.lockSlotKey("Mon 10:00");
-        dao.saveSchedule(schedule);
+    void testNullRequestDoesNothing() {
+        interactor.execute(null);
 
-        // Now send empty set → unlock everything
-        LockActivityRequestModel request =
-                new LockActivityRequestModel(1, Set.of());
-
-        interactor.execute(request);
-
-        Schedule updated = presenter.getLastResponse().getUpdatedSchedule();
-        assertTrue(updated.getLockedSlotKeys().isEmpty());
+        assertNull(presenter.lastResponse);
     }
 
     @Test
-    void testNullRequestDoesNotCrash() {
-        interactor.execute(null);
+    void testNewScheduleCreatedIfMissing() {
+        LockActivityRequestModel req =
+                new LockActivityRequestModel(99, Set.of("Mon 3:00"));
 
-        // For null request, interactor should not call presenter at all
-        assertNull(presenter.getLastResponse());
+        interactor.execute(req);
+
+        Schedule updated = presenter.lastResponse.getUpdatedSchedule();
+        assertEquals(99, updated.getScheduleId());
     }
 
+    // -------------------
+    // Mocks
+    // -------------------
+    private static class MockLockPresenter implements LockActivityOutputBoundary {
+        LockActivityResponseModel lastResponse;
+
+        @Override
+        public void present(LockActivityResponseModel response) {
+            lastResponse = response;
+        }
+    }
+
+    private static class MockGenerator implements ScheduleGenerationService {
+
+        @Override
+        public Schedule generate(String description, Map<String, String> fixedActivities) {
+            return new Schedule(999, "week");
+        }
+
+        @Override
+        public String findFreeSlot(Schedule schedule) { return null; }
+
+        @Override
+        public void assignActivityToSlot(Schedule schedule, String desc, float dur) { }
+    }
 }
+

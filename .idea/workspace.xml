@@ -192,10 +192,7 @@
     <option name="LAST_COMMIT_MESSAGE" value="Adjusted ActivityPanel size" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeControllerTest.ic" NAME="BlockOffTimeControllerTest Coverage Results" MODIFIED="1764539111439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
-      <FILTER>plan4life.use_case.block_off_time.*</FILTER>
-    </SUITE>
-    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeInteractorTest.ic" NAME="BlockOffTimeInteractorTest Coverage Results" MODIFIED="1764538883918" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+    <SUITE FILE_PATH="coverage/team_project$BlockOffTimeInteractorTest.ic" NAME="BlockOffTimeInteractorTest Coverage Results" MODIFIED="1764539316496" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
       <FILTER>plan4life.use_case.block_off_time.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/team_project$MockScheduleGenerationServiceTest.ic" NAME="MockScheduleGenerationServiceTest Coverage Results" MODIFIED="1764541031870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">

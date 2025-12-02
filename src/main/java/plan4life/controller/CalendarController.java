@@ -61,7 +61,7 @@ public class CalendarController {
 
     public void generateSchedule(String routineDescription,
                                  Map<String, String> fixedActivities,
-                                 List<String> freeActivities) {
+                                 List<String>freeActivities) {
         GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription,
                 fixedActivities, freeActivities);
         generateScheduleInteractor.execute(request);
@@ -250,8 +250,42 @@ public class CalendarController {
                 false   // isImportant = false -> cancel
         );
     }
-}
 
+    // =========================================================
+    //               Actual Reminder Popup Display
+    // =========================================================
+
+    /**
+     * Displays the reminder pop-up and, depending on the event settings,
+     * may also play a sound and show simulated "message" and "email" notifications.
+     */
+    private void showReminderPopup(Event event) {
+        // Decide whether to beep
+        boolean shouldBeep =
+                event.isPlaySound()
+                        || "Message with sound".equalsIgnoreCase(event.getAlertType());
+
+        if (shouldBeep) {
+            // Double beep to make it more audible
+            for (int i = 0; i < 2; i++) {
+                Toolkit.getDefaultToolkit().beep();
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException ignored) {}
+            }
+        }
+
+        // Base reminder popup (what the user definitely sees)
+        StringBuilder msg = new StringBuilder();
+        msg.append("Reminder: ").append(event.getTitle());
+        msg.append(" (").append(event.getUrgencyLevel().name()).append(")");
+
+        JOptionPane.showMessageDialog(
+                null,
+                msg.toString(),
+                "Important Reminder",
+                JOptionPane.INFORMATION_MESSAGE
+        );
 
 //    // =========================================================
 //    //               Actual Reminder Popup Display

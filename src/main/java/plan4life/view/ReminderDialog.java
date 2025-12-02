@@ -1,44 +1,134 @@
 package plan4life.view;
 
 import plan4life.controller.CalendarController;
-import plan4life.view.Event;
+import plan4life.view.Event.UrgencyLevel;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import java.awt.*;
 
-public class ReminderDialog extends JDialog{
-    private final JSpinner minutesSpinner;
-    private final JComboBox<String> alertTypeBox;
+/**
+ * Dialog for Use Case 7: Set Important Reminder.
+ *
+ * Allows the user to choose:
+ *  - alert type (message only, message with sound, etc.)
+ *  - minutes before the event
+ *  - urgency level (with color)
+ *  - whether to send message / email / play sound
+ *  - apply to this event only or to all events
+ */
+public class ReminderDialog extends JDialog {
+
+    private final CalendarController controller;
+    private final Event event;
+
+    private JComboBox<String> alertTypeBox;
+    private JSpinner minutesSpinner;
+    private JComboBox<UrgencyLevel> urgencyBox;
+
+    private JCheckBox sendMessageCheck;
+    private JCheckBox sendEmailCheck;
+    private JCheckBox soundCheck;
+
+    private JRadioButton applyThisEventRadio;
+    private JRadioButton applyAllEventsRadio;
 
     public ReminderDialog(Frame owner,
                           CalendarController controller,
                           Event event) {
-        super(owner, "Set Important Reminder", true); // modal dialog
+        super(owner, "Set Important Reminder", true);
+        this.controller = controller;
+        this.event = event;
 
+        initUI();
+        urgencyBox.setUI(new BasicComboBoxUI());
+        configureUrgencyRenderer();
+
+        pack();
+        setLocationRelativeTo(owner);
+    }
+
+    private void initUI() {
+        setLayout(new BorderLayout(10, 10));
+
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+
+        // Title
         JLabel titleLabel = new JLabel(
-                "This event is marked as Important. Set a reminder time:");
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.PLAIN, 13f));
+                "Set reminder time and options for important events:");
+        gbc.gridwidth = 2;
+        mainPanel.add(titleLabel, gbc);
 
+        // Alert type
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        mainPanel.add(new JLabel("Alert:"), gbc);
+
+        gbc.gridx = 1;
         alertTypeBox = new JComboBox<>(new String[]{
-                "Message",
-                "Message with sound"
+                "Message only",
+                "Message with sound",
+                "Sound only"
         });
+        alertTypeBox.setSelectedIndex(1); // default: Message with sound
+        mainPanel.add(alertTypeBox, gbc);
 
-        minutesSpinner = new JSpinner(
-                new SpinnerNumberModel(15, 0, 1440, 5)); // default 15 mins
+        // Minutes before
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(new JLabel("Remind me:"), gbc);
 
-        JLabel minutesLabel = new JLabel("minutes before");
+        gbc.gridx = 1;
+        minutesSpinner = new JSpinner(new SpinnerNumberModel(10, 0, 1440, 5));
+        JPanel minutesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        minutesPanel.add(minutesSpinner);
+        minutesPanel.add(new JLabel("  minutes before"));
+        mainPanel.add(minutesPanel, gbc);
 
-        JButton okButton = new JButton("OK");
-        JButton cancelButton = new JButton("Cancel");
+        // Urgency
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(new JLabel("Urgency:"), gbc);
 
-        okButton.addActionListener(e -> {
-            int minutesBefore = (Integer) minutesSpinner.getValue();
-            String alertType = (String) alertTypeBox.getSelectedItem();
+        gbc.gridx = 1;
+        urgencyBox = new JComboBox<>(UrgencyLevel.values());
+        urgencyBox.setSelectedItem(UrgencyLevel.MEDIUM);
+        mainPanel.add(urgencyBox, gbc);
 
-            controller.setImportantReminder(event, minutesBefore, alertType);
+        // Notification channels
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        JPanel channelsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        sendMessageCheck = new JCheckBox("Send message", true);
+        sendEmailCheck = new JCheckBox("Send email", true);
+        soundCheck = new JCheckBox("Play sound", true);
+        channelsPanel.add(sendMessageCheck);
+        channelsPanel.add(sendEmailCheck);
+        channelsPanel.add(soundCheck);
+        mainPanel.add(channelsPanel, gbc);
 
-        // ---- Buttons ----
+        // Apply scope (this event / all events)
+        gbc.gridy++;
+        JPanel scopePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        applyThisEventRadio = new JRadioButton("Apply to this event only", true);
+        applyAllEventsRadio = new JRadioButton("Apply to all events");
+        ButtonGroup scopeGroup = new ButtonGroup();
+        scopeGroup.add(applyThisEventRadio);
+        scopeGroup.add(applyAllEventsRadio);
+        scopePanel.add(applyThisEventRadio);
+        scopePanel.add(applyAllEventsRadio);
+        mainPanel.add(scopePanel, gbc);
+
+        add(mainPanel, BorderLayout.CENTER);
+
+        // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton removeBtn = new JButton("Remove Reminder");
         JButton cancelBtn = new JButton("Cancel");
@@ -53,68 +143,67 @@ public class ReminderDialog extends JDialog{
         removeBtn.addActionListener(e -> onRemove());
         cancelBtn.addActionListener(e -> dispose());
         okBtn.addActionListener(e -> onOk());
-
-
-        JPanel content = new JPanel(new GridBagLayout());
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.insets = new Insets(8, 10, 8, 10);
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.gridwidth = 3;
-        gc.anchor = GridBagConstraints.WEST;
-        content.add(titleLabel, gc);
-
-        gc.gridy++;
-        gc.gridwidth = 1;
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        content.add(new JLabel("Alert:"), gc);
-
-        gc.gridx = 1;
-        gc.weightx = 1.0;
-        content.add(alertTypeBox, gc);
-
-        gc.gridx = 0;
-        gc.gridy++;
-        gc.weightx = 0;
-        content.add(new JLabel("Remind me:"), gc);
-
-        gc.gridx = 1;
-        content.add(minutesSpinner, gc);
-
-        gc.gridx = 2;
-        content.add(minutesLabel, gc);
-
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.add(cancelButton);
-        btnPanel.add(okButton);
-
-        gc.gridx = 0;
-        gc.gridy++;
-        gc.gridwidth = 3;
-        gc.weightx = 1.0;
-        gc.anchor = GridBagConstraints.EAST;
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.add(cancelBtn);
-        btnPanel.add(okBtn);
-        content.add(btnPanel, gc);
-
-        setContentPane(content);
-        pack();
-        setLocationRelativeTo(owner);
     }
 
-    private void updateColorPreview(Event.UrgencyLevel level) {
-        if (level == null) return;
-        Event temp = new Event("temp", java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
-        temp.setUrgencyLevel(level);
-        colorPreview.setBackground(temp.getColor());
+    /**
+     * Install a colorful renderer for urgency levels.
+     * This is called after urgencyBox is created.
+     */
+    private void configureUrgencyRenderer() {
+        if (urgencyBox == null) {
+            return;
+        }
+
+        urgencyBox.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            label.setOpaque(true);
+
+            if (value instanceof UrgencyLevel) {
+                UrgencyLevel level = (UrgencyLevel) value;
+                label.setText(level.name());
+
+                Color levelColor;
+                switch (level) {
+                    case LOW:
+                        levelColor = new Color(8, 239, 204);   // cyan-ish
+                        break;
+                    case MEDIUM:
+                        levelColor = new Color(65, 243, 6);    // green
+                        break;
+                    case HIGH:
+                        levelColor = new Color(200, 120, 0);   // orange
+                        break;
+                    default:
+                        levelColor = list.getForeground();
+                }
+
+                if (isSelected) {
+                    // For selected item (both dropdown and closed state)
+                    label.setBackground(levelColor);
+                    label.setForeground(Color.WHITE);
+                } else {
+                    label.setBackground(list.getBackground());
+                    label.setForeground(levelColor);
+                }
+            } else if (value != null) {
+                label.setText(value.toString());
+                if (isSelected) {
+                    label.setBackground(list.getSelectionBackground());
+                    label.setForeground(list.getSelectionForeground());
+                } else {
+                    label.setBackground(list.getBackground());
+                    label.setForeground(list.getForeground());
+                }
+            }
+
+            return label;
+        });
     }
 
     private void onOk() {
         int minutesBefore = (Integer) minutesSpinner.getValue();
         String alertType = (String) alertTypeBox.getSelectedItem();
-        Event.UrgencyLevel urgencyLevel =
-                (Event.UrgencyLevel) urgencyBox.getSelectedItem();
+        UrgencyLevel urgencyLevel = (UrgencyLevel) urgencyBox.getSelectedItem();
 
         boolean sendMsg = sendMessageCheck.isSelected();
         boolean sendEmail = sendEmailCheck.isSelected();
@@ -149,17 +238,16 @@ public class ReminderDialog extends JDialog{
                     sendEmail,
                     playSound
             );
-
             controller.registerEvent(event);
         }
 
         dispose();
     }
+
     private void onRemove() {
         if (event != null) {
             controller.cancelImportantReminder(event);
         }
         dispose();
     }
-
 }

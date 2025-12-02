@@ -7,9 +7,6 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
 import plan4life.use_case.lock_activity.LockActivityInputBoundary;
 import plan4life.use_case.lock_activity.LockActivityRequestModel;
-import plan4life.use_case.set_reminder.SetReminderInputBoundary;
-import plan4life.use_case.set_reminder.SetReminderRequestModel;
-
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -19,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,28 +32,20 @@ import java.util.TimerTask;
  */
 public class CalendarController {
 
-    // ==== Use case interactors ====
     private final GenerateScheduleInputBoundary generateScheduleInteractor;
     private final LockActivityInputBoundary lockActivityInteractor;
 
-    // ==== Reminder-related data ====
+
     /** Each Event may have an associated Timer that fires at the reminder time. */
     private final Map<Event, Timer> reminderTimers = new HashMap<>();
 
     /** All events known to the controller (for "apply to all events"). */
     private final List<Event> events = new ArrayList<>();
-    private final SetReminderInputBoundary setReminderInteractor;
 
-
-    // =========================================================
-    //                       Constructor
-    // =========================================================
     public CalendarController(GenerateScheduleInputBoundary generateScheduleInteractor,
-                              LockActivityInputBoundary lockActivityInteractor,
-                              SetReminderInputBoundary setReminderInteractor) {
+                              LockActivityInputBoundary lockActivityInteractor) {
         this.generateScheduleInteractor = generateScheduleInteractor;
         this.lockActivityInteractor = lockActivityInteractor;
-        this.setReminderInteractor = setReminderInteractor;
     }
 
     public void generateSchedule(String routineDescription,
@@ -68,26 +56,12 @@ public class CalendarController {
         generateScheduleInteractor.execute(request);
     }
 
-    // =========================================================
-    //                 Lock & regenerate schedule
-    // =========================================================
-
-    /**
-     * Used by CalendarFrame when user locks certain time slots.
-     */
     public void lockAndRegenerate(int scheduleId, Set<String> lockedSlots) {
-        Set<String> copy = (lockedSlots == null)
-                ? new HashSet<>()
-                : new HashSet<>(lockedSlots);
-
         LockActivityRequestModel request =
-                new LockActivityRequestModel(scheduleId, copy);
+                new LockActivityRequestModel(scheduleId, lockedSlots);
         lockActivityInteractor.execute(request);
     }
 
-    // =========================================================
-    //                Event registration & querying
-    // =========================================================
 
     /**
      * Registers an event within the system.
@@ -107,9 +81,6 @@ public class CalendarController {
         return Collections.unmodifiableList(events);
     }
 
-    // =========================================================
-    //           Simplified reminder API (old signature)
-    // =========================================================
 
     /**
      * Backwards-compatible version that only sets minutesBefore and alertType.
@@ -130,10 +101,10 @@ public class CalendarController {
         );
     }
 
-    public void setImportantReminderForAllEvents(int minutesBefore,
+    public void setImportantReminderForAllEvents(Event event, int minutesBefore,
                                                  String alertType) {
         boolean playSound = "Message with sound".equalsIgnoreCase(alertType);
-        setImportantReminderForAllEvents(
+        setImportantReminderForAllEvents(event,
                 minutesBefore,
                 alertType,
                 UrgencyLevel.MEDIUM,
@@ -143,13 +114,7 @@ public class CalendarController {
         );
     }
 
-    // =========================================================
-    //      Extended reminder API used by ReminderDialog
-    // =========================================================
 
-    /**
-     * Sets a reminder with full options for a single event.
-     */
     public void setImportantReminderForEvent(Event event,
                                              int minutesBefore,
                                              String alertType,
@@ -159,7 +124,6 @@ public class CalendarController {
                                              boolean playSound) {
         if (event == null) return;
 
-        // Store metadata on the event
         event.setImportant(true);
         event.setReminderMinutesBefore(minutesBefore);
         event.setAlertType(alertType);
@@ -171,7 +135,6 @@ public class CalendarController {
         // Track this event globally
         registerEvent(event);
 
-        // Cancel only the timer, not the event fields
         cancelReminderTimer(event);
 
         LocalDateTime reminderTime = event.getStart().minusMinutes(minutesBefore);
@@ -191,30 +154,14 @@ public class CalendarController {
         }, delay);
 
         reminderTimers.put(event, timer);
-        // Persist reminder via use case (optional)
-        if (setReminderInteractor != null) {
-            SetReminderRequestModel request =
-                    new SetReminderRequestModel(
-                            event.getTitle(),
-                            event.getStart(),
-                            event.getEnd(),
-                            minutesBefore,
-                            alertType,
-                            urgencyLevel.name(),
-                            sendMessage,
-                            sendEmail,
-                            playSound,
-                            true
-                    );
-            setReminderInteractor.setReminder(request);
-        }
     }
+
 
     /**
      * Applies the same reminder configuration to all registered events.
      * If there are no events yet, shows an informational message.
      */
-    public void setImportantReminderForAllEvents(int minutesBefore,
+    public void setImportantReminderForAllEvents(Event event, int minutesBefore,
                                                  String alertType,
                                                  UrgencyLevel urgencyLevel,
                                                  boolean sendMessage,
@@ -243,10 +190,6 @@ public class CalendarController {
         }
     }
 
-    // =========================================================
-    //                  Cancel timers / cancel reminders
-    // =========================================================
-
     /** Cancel only the timer associated with an event, without modifying its fields. */
     private void cancelReminderTimer(Event event) {
         Timer t = reminderTimers.remove(event);
@@ -270,50 +213,23 @@ public class CalendarController {
         event.setSendMessage(false);
 
         cancelReminderTimer(event);
-
-        if (setReminderInteractor != null) {
-            SetReminderRequestModel request =
-                    new SetReminderRequestModel(
-                            event.getTitle(),
-                            event.getStart(),
-                            event.getEnd(),
-                            0,
-                            null,
-                            null,
-                            false,
-                            false,
-                            false,
-                            false
-                    );
-            setReminderInteractor.cancelReminder(request);
-        }
     }
 
-    // =========================================================
-    //               Actual Reminder Popup Display
-    // =========================================================
+
 
     /**
      * Displays the reminder pop-up and, depending on the event settings,
      * may also play a sound and show simulated "message" and "email" notifications.
      */
     private void showReminderPopup(Event event) {
-        // Decide whether to beep
         boolean shouldBeep =
                 event.isPlaySound()
                         || "Message with sound".equalsIgnoreCase(event.getAlertType());
 
         if (shouldBeep) {
-            // Double beep to make it more audible
-            for (int i = 0; i < 2; i++) {
-                Toolkit.getDefaultToolkit().beep();
-                try {
-                    Thread.sleep(150);
-                } catch (InterruptedException ignored) {}
-            }
+            Toolkit.getDefaultToolkit().beep();
         }
 
-        // Base reminder popup (what the user definitely sees)
         StringBuilder msg = new StringBuilder();
         msg.append("Reminder: ").append(event.getTitle());
         msg.append(" (").append(event.getUrgencyLevel().name()).append(")");
@@ -325,7 +241,6 @@ public class CalendarController {
                 JOptionPane.INFORMATION_MESSAGE
         );
 
-        // Simulate an in-app "message" notification, if requested
         if (event.isSendMessage()) {
             JOptionPane.showMessageDialog(
                     null,
@@ -336,7 +251,6 @@ public class CalendarController {
             );
         }
 
-        // Simulate an in-app "email" notification, if requested
         if (event.isSendEmail()) {
             JOptionPane.showMessageDialog(
                     null,
@@ -345,9 +259,9 @@ public class CalendarController {
                     JOptionPane.INFORMATION_MESSAGE
             );
         }
+
     }
 }
-
 
 
 

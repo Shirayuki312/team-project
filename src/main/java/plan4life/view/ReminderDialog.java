@@ -38,22 +38,11 @@ public class ReminderDialog extends JDialog{
 
             controller.setImportantReminder(event, minutesBefore, alertType);
 
-        // ---- Buttons ----
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton removeBtn = new JButton("Remove Reminder");
-        JButton cancelBtn = new JButton("Cancel");
-        JButton okBtn = new JButton("OK");
+            dispose();
+        });
 
-        buttonPanel.add(removeBtn);
-        buttonPanel.add(cancelBtn);
-        buttonPanel.add(okBtn);
-
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        removeBtn.addActionListener(e -> onRemove());
-        cancelBtn.addActionListener(e -> dispose());
-        okBtn.addActionListener(e -> onOk());
-
+        cancelButton.addActionListener(e -> { dispose();
+        });
 
         JPanel content = new JPanel(new GridBagLayout());
         GridBagConstraints gc = new GridBagConstraints();
@@ -93,73 +82,11 @@ public class ReminderDialog extends JDialog{
         gc.gridwidth = 3;
         gc.weightx = 1.0;
         gc.anchor = GridBagConstraints.EAST;
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.add(cancelBtn);
-        btnPanel.add(okBtn);
+        gc.fill = GridBagConstraints.NONE;
         content.add(btnPanel, gc);
 
         setContentPane(content);
         pack();
         setLocationRelativeTo(owner);
     }
-
-    private void updateColorPreview(Event.UrgencyLevel level) {
-        if (level == null) return;
-        Event temp = new Event("temp", java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
-        temp.setUrgencyLevel(level);
-        colorPreview.setBackground(temp.getColor());
-    }
-
-    private void onOk() {
-        int minutesBefore = (Integer) minutesSpinner.getValue();
-        String alertType = (String) alertTypeBox.getSelectedItem();
-        Event.UrgencyLevel urgencyLevel =
-                (Event.UrgencyLevel) urgencyBox.getSelectedItem();
-
-        boolean sendMsg = sendMessageCheck.isSelected();
-        boolean sendEmail = sendEmailCheck.isSelected();
-        boolean playSound = soundCheck.isSelected();
-
-        if (applyThisEventRadio.isSelected() && event == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "There is no event selected. Please create or select an event first.",
-                    "No event selected",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            return;
-        }
-
-        if (applyAllEventsRadio.isSelected()) {
-            controller.setImportantReminderForAllEvents(
-                    minutesBefore,
-                    alertType,
-                    urgencyLevel,
-                    sendMsg,
-                    sendEmail,
-                    playSound
-            );
-        } else {
-            controller.setImportantReminderForEvent(
-                    event,
-                    minutesBefore,
-                    alertType,
-                    urgencyLevel,
-                    sendMsg,
-                    sendEmail,
-                    playSound
-            );
-
-            controller.registerEvent(event);
-        }
-
-        dispose();
-    }
-    private void onRemove() {
-        if (event != null) {
-            controller.cancelImportantReminder(event);
-        }
-        dispose();
-    }
-
 }

@@ -142,6 +142,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     // --- GETTER FOR ROUTINE DESCRIPTION ---
     public String getRoutineDescription() {
+        // TODO: Replace with your actual text field / textarea
         // For now, we pop up a simple input (temporary)
         return JOptionPane.showInputDialog(this, "Describe your routine:");
     }

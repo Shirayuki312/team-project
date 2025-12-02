@@ -21,6 +21,7 @@ public class ReminderDialog extends JDialog {
 
     private final CalendarController controller;
     private final Event event;
+    private final String timeKey;
 
     private JComboBox<String> alertTypeBox;
     private JSpinner minutesSpinner;
@@ -35,10 +36,11 @@ public class ReminderDialog extends JDialog {
 
     public ReminderDialog(Frame owner,
                           CalendarController controller,
-                          Event event) {
+                          Event event, String timeKey) {
         super(owner, "Set Important Reminder", true);
         this.controller = controller;
         this.event = event;
+        this.timeKey = timeKey;
 
         initUI();
         urgencyBox.setUI(new BasicComboBoxUI());
@@ -257,21 +259,31 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
             controller.registerEvent(event);
-        }
+            // NEW: highlight the event cell by urgency
+            if (getOwner() instanceof CalendarFrame && timeKey != null) {
+                CalendarFrame frame = (CalendarFrame) getOwner();
+                frame.highlightReminderCell(timeKey, urgencyLevel);
+            }
 
-        dispose();
+            dispose();
+        }
     }
 
-    private void onRemove() {
-        if (event != null) {
-            controller.cancelImportantReminder(event);
+        private void onRemove () {
+            if (event != null) {
+                controller.cancelImportantReminder(event);
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Reminder cancelled.",
-                    "Message",
-                    JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Reminder cancelled.",
+                        "Message",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                if (getOwner() instanceof CalendarFrame && timeKey != null) {
+                    CalendarFrame frame = (CalendarFrame) getOwner();
+                    frame.resetReminderCell(timeKey);
+                }
+                dispose();
+            }
         }
-        dispose();
     }
-}

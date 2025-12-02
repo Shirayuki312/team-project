@@ -172,7 +172,7 @@ public class ActivityPanel extends JPanel {
                     : null;
 
             ReminderDialog reminderDialog =
-                    new ReminderDialog(owner, calendarController, event);
+                    new ReminderDialog(owner, calendarController, event, null);
             reminderDialog.setVisible(true);
 
         });

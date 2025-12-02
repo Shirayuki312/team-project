@@ -181,7 +181,12 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
      * - register events and open the reminder dialog
      */
     public void setCalendarController(CalendarController controller) {
+
         this.calendarController = controller;
+        // NEW: also let ActivityPanel use it for its Set Reminder button
+        if (this.activityPanel != null) {
+            this.activityPanel.setCalendarController(controller);
+        }
     }
 
     private void updateCalendarTitle() {

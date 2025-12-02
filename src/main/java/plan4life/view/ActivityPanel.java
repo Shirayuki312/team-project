@@ -8,12 +8,22 @@ import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 
+import plan4life.controller.CalendarController;
+import plan4life.view.Event;
+import plan4life.view.ReminderDialog;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+
 public class ActivityPanel extends JPanel {
     private Schedule schedule;
     private final DefaultListModel<String> activityListModel = new DefaultListModel<>();
     private final JList<String> activityList = new JList<>(activityListModel);
     private final JButton addButton = new JButton("Add Activity");
     private final JButton deleteButton = new JButton("Delete Activity"); // New button
+    private CalendarController calendarController;
 
     public ActivityPanel(Schedule schedule) {
         this.schedule = schedule;
@@ -71,6 +81,15 @@ public class ActivityPanel extends JPanel {
         form.add(new JLabel("Day:"));
         form.add(daySelector);
 
+        // ----- NEW: "Set Reminder" button inside the Add Activity dialog -----
+        JButton setReminderButton = new JButton("Set Reminder");
+        JPanel reminderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        reminderPanel.add(setReminderButton);
+
+        form.add(new JLabel(""));
+        form.add(reminderPanel);
+
+
 
         startTimeField.setEnabled(false);
 
@@ -78,6 +97,87 @@ public class ActivityPanel extends JPanel {
             boolean isFixed = typeSelector.getSelectedItem().equals("Fixed Activity");
             startTimeField.setEnabled(isFixed);
         });
+
+        // ----- NEW: logic for "Set Reminder" button -----
+        setReminderButton.addActionListener(e -> {
+            // 1) 必须有 CalendarController 才能设置 reminder
+            if (calendarController == null) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Reminder feature is not available (no CalendarController attached).",
+                        "Reminder not available",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                return;
+            }
+
+            // 2) 描述，允许为空时使用默认
+            String desc = descriptionField.getText().trim();
+            if (desc.isEmpty()) {
+                desc = "New activity";
+            }
+
+            // 3) 读取 duration，必须是数字
+            String durText = durationField.getText().trim();
+            double durationHours;
+            try {
+                durationHours = Double.parseDouble(durText);
+            } catch (NumberFormatException ex1) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Please enter a valid duration (number of hours) before setting a reminder."
+                );
+                return;
+            }
+
+            // 4) 必须是 Fixed Activity 且有 start time
+            boolean isFixedType = "Fixed Activity".equals(typeSelector.getSelectedItem());
+            String start = startTimeField.getText().trim();
+
+            if (!isFixedType || start.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "To set a reminder here, please choose \"Fixed Activity\" and provide a start time."
+                );
+                return;
+            }
+
+            // 5) 解析 start time: HH:mm
+            java.time.LocalTime time;
+            try {
+                time = java.time.LocalTime.parse(start); // e.g., "14:00"
+            } catch (Exception ex2) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Start time format must be HH:mm, e.g., 14:00."
+                );
+                return;
+            }
+
+            // 6) 先简单用今天日期；如果以后要按 day 下拉框映射具体日期，再扩展这里
+            java.time.LocalDate date = java.time.LocalDate.now();
+            java.time.LocalDateTime startDateTime = java.time.LocalDateTime.of(date, time);
+            java.time.LocalDateTime endDateTime =
+                    startDateTime.plusMinutes((long) (durationHours * 60));
+
+            // 7) 构造一个 Event，让现有的 set reminder use case 复用
+            Event event = new Event(desc, startDateTime, endDateTime);
+            calendarController.registerEvent(event);
+
+            // 8) Open the existing ReminderDialog (same behavior as in CalendarFrame)
+            java.awt.Window window = SwingUtilities.getWindowAncestor(this);
+            // Safely cast to Frame; if not a Frame, pass null as the owner
+            java.awt.Frame owner = (window instanceof java.awt.Frame)
+                    ? (java.awt.Frame) window
+                    : null;
+
+            ReminderDialog reminderDialog =
+                    new ReminderDialog(owner, calendarController, event);
+            reminderDialog.setVisible(true);
+
+        });
+
+
 
         int result = JOptionPane.showConfirmDialog(
                 this,
@@ -176,6 +276,11 @@ public class ActivityPanel extends JPanel {
         this.schedule = schedule;
         refreshActivityList();
     }
+
+    public void setCalendarController(CalendarController controller) {
+        this.calendarController = controller;
+    }
+
     public List<String> getFreeActivities() {
         List<String> free = new java.util.ArrayList<>();
         for (Activity a : schedule.getTasks()) {

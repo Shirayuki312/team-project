@@ -3,15 +3,13 @@ package plan4life;
 import javax.swing.SwingUtilities;
 
 // --- Core Architecture Imports ---
-import plan4life.data_access.InMemoryScheduleDAO;
-import plan4life.data_access.ScheduleDataAccessInterface;
-import plan4life.data_access.InMemoryUserPreferencesDAO;
-import plan4life.data_access.UserPreferencesDataAccessInterface;
+import plan4life.data_access.*;
 
 import plan4life.entities.Schedule;
 
 // --- Presenters ---
 import plan4life.presenter.CalendarPresenter;
+import plan4life.presenter.SetReminderPresenter;
 import plan4life.presenter.SettingsPresenter;
 
 // --- Use Cases: Block Off Time ---
@@ -25,6 +23,7 @@ import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
 import plan4life.use_case.generate_schedule.ScheduleGenerationService;
+// [关键修复] 必须导入这个 Mock 类
 import plan4life.use_case.generate_schedule.MockScheduleGenerationService;
 
 // --- Use Cases: Lock Activity ---
@@ -36,6 +35,14 @@ import plan4life.use_case.lock_activity.LockActivityOutputBoundary;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 import plan4life.use_case.set_preferences.SetPreferencesInteractor;
 import plan4life.use_case.set_preferences.SetPreferencesOutputBoundary;
+
+// --- Use Cases: Set Reminder ---
+import plan4life.data_access.InMemoryReminderDAO;
+import plan4life.data_access.ReminderDataAccessInterface;
+import plan4life.presenter.SetReminderPresenter;
+import plan4life.use_case.set_reminder.SetReminderInputBoundary;
+import plan4life.use_case.set_reminder.SetReminderInteractor;
+import plan4life.use_case.set_reminder.SetReminderOutputBoundary;
 
 // --- View & Controllers ---
 import plan4life.view.CalendarFrame;
@@ -83,6 +90,14 @@ public class Main {
             // ============================================================
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
 
+            // ============================================================
+            // 6. set reminder
+            // ============================================================
+            ReminderDataAccessInterface reminderDAO = new InMemoryReminderDAO();
+            SetReminderOutputBoundary reminderPresenter = new SetReminderPresenter();
+            SetReminderInputBoundary setReminderInteractor =
+                    new SetReminderInteractor(reminderDAO, reminderPresenter);
+
             // NEW generator supporting duration and dayIndex keys
             ScheduleGenerationService generator =
                     new MockScheduleGenerationService();
@@ -95,7 +110,7 @@ public class Main {
                     new LockActivityInteractor(lockPresenter, scheduleDAO);
 
             CalendarController calendarController =
-                    new CalendarController(scheduleInput, lockInteractor);
+                    new CalendarController(scheduleInput, lockInteractor, setReminderInteractor);
 
             // ============================================================
             // 6. CONNECT VIEW → CONTROLLERS

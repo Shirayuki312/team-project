@@ -45,6 +45,9 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
 
     @Override
     public void setReminder(SetReminderRequestModel requestModel) {
+        System.out.println("DEBUG sendMsg=" + requestModel.isSendMessage()
+                + ", sendEmail=" + requestModel.isSendEmail()
+                + ", playSound=" + requestModel.isPlaySound());
         String id = buildReminderId(requestModel);
 
         // Cancel any existing timer for this reminder
@@ -76,8 +79,13 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
                 SetReminderResponseModel.fromEntity(reminder);
         presenter.presentReminderScheduled(scheduledResponse);
 
-        // If the time is already in the past, fire immediately
-        if (delayMillis <= 0) {
+        // Decide whether to fire immediately:
+        // 1) reminder time is in the past, OR
+        // 2) user set minutesBefore = 0  (demo-friendly: treat as "remind now")
+        boolean fireImmediately =
+                delayMillis <= 0 || requestModel.getMinutesBefore() == 0;
+
+        if (fireImmediately) {
             presenter.presentReminderFired(scheduledResponse);
             return;
         }

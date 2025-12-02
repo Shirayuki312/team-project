@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import com.google.gson.stream.JsonReader;
 
+import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,6 +16,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -23,6 +26,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Generates a schedule proposal using a Hugging Face model.
@@ -33,6 +38,8 @@ public class LlmScheduleService {
     private static final String DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct";
     private static final String HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions";
     private static final int EXAMPLE_COUNT = 2;
+    private static final int EARLIEST_MORNING_HOUR = 6;
+    private static final int LATEST_REASONABLE_HOUR = 22;
 
     private final PromptBuilder promptBuilder;
     private final Gson gson;
@@ -91,16 +98,11 @@ public class LlmScheduleService {
         for (HfRequestSettings settings : List.of(primary, retry)) {
             try {
                 String responseJson = callHuggingFace(prompt, apiKey, model, settings);
-                List<ProposedEvent> parsed = parseProposedEvents(responseJson);
-                if (parsed.isEmpty()) {
-                    lastFailureReason = "Empty or unparsable response from model " + model + " with settings " + settings.summary();
-                    System.out.printf("[LlmScheduleService] Hugging Face returned an empty plan; %s.%n", lastFailureReason);
-                } else {
-                    lastCallInfo = LastCallInfo.liveModel(model, parsed.size());
-                    System.out.printf("[LlmScheduleService] Used Hugging Face model '%s' (API key length %d) with settings %s. Parsed %d events.%n",
-                            model, apiKey.length(), settings.summary(), parsed.size());
-                    return parsed;
-                }
+                List<ProposedEvent> parsed = parseProposedEvents(responseJson, fixedEvents);
+                lastCallInfo = LastCallInfo.liveModel(model, parsed.size());
+                System.out.printf("[LlmScheduleService] Used Hugging Face model '%s' (API key length %d) with settings %s. Parsed %d events.%n",
+                        model, apiKey.length(), settings.summary(), parsed.size());
+                return parsed;
             } catch (Exception ex) {
                 lastFailureReason = ex.getMessage();
                 System.out.printf("[LlmScheduleService] Hugging Face call failed (%s).%n", ex.getMessage());
@@ -138,6 +140,8 @@ public class LlmScheduleService {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();
         String responseBody = response.body();
+        System.out.printf("[LlmScheduleService] HF router raw response (truncated to 2000 chars): %s%n",
+                truncate(responseBody, 2000));
         if (status >= 400) {
             String bodyText = responseBody == null ? "<empty body>" : truncate(responseBody, 800);
             throw new IllegalStateException("Hugging Face returned status " + status + " with body: " + bodyText);
@@ -160,54 +164,186 @@ public class LlmScheduleService {
                 .orElse(DEFAULT_MODEL);
     }
 
-    private List<ProposedEvent> parseProposedEvents(String responseBody) {
+    // Parse the OpenAI-style chat completion payload into our RawSchedule JSON and surface clear errors when unusable.
+    private List<ProposedEvent> parseProposedEvents(String responseBody, List<FixedEventInput> fixedEvents) {
         if (responseBody == null || responseBody.isBlank()) {
-            return Collections.emptyList();
+            throw new IllegalStateException("Failed to parse schedule JSON from HF response: empty body");
         }
 
-        String jsonToParse = extractGeneratedText(responseBody).orElse(responseBody);
+        String jsonToParse;
         try {
-            RawSchedule rawSchedule = gson.fromJson(jsonToParse, RawSchedule.class);
-            if (rawSchedule == null || rawSchedule.events == null) {
-                return Collections.emptyList();
-            }
-            return rawSchedule.events.stream()
-                    .map(this::toProposedEvent)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            jsonToParse = extractGeneratedText(responseBody);
         } catch (Exception ex) {
-            return Collections.emptyList();
+            throw new IllegalStateException(ex.getMessage() + " Raw body (truncated): " + truncate(responseBody, 600), ex);
         }
+
+        Exception strictFailure = null;
+        try {
+            List<ProposedEvent> parsed = parseStrictSchedule(jsonToParse);
+            System.out.printf("[LlmScheduleService] Parsed schedule via strict JSON (%d events).%n", parsed.size());
+            return postProcessParsedEvents(parsed, fixedEvents);
+        } catch (Exception ex) {
+            strictFailure = ex;
+        }
+
+        List<ProposedEvent> salvaged = salvageSchedule(jsonToParse);
+        if (!salvaged.isEmpty()) {
+            System.out.printf("[LlmScheduleService] Salvage JSON parsing recovered %d events after strict failure (%s).%n",
+                    salvaged.size(), strictFailure == null ? "unknown" : strictFailure.getClass().getSimpleName());
+            return postProcessParsedEvents(salvaged, fixedEvents);
+        }
+
+        String failureDetail = strictFailure == null ? "Unknown parsing failure"
+                : strictFailure.getClass().getSimpleName() + ": " + strictFailure.getMessage();
+        throw new IllegalStateException("Failed to parse schedule JSON from HF response: " + failureDetail
+                + ". Extracted content (truncated): " + truncate(jsonToParse, 800), strictFailure);
     }
 
-    private Optional<String> extractGeneratedText(String responseBody) {
-        try {
-            RawHuggingFaceResponse[] responses = gson.fromJson(responseBody, RawHuggingFaceResponse[].class);
-            if (responses != null && responses.length > 0 && responses[0].generated_text != null) {
-                return Optional.of(responses[0].generated_text);
-            }
-        } catch (Exception ignored) {
-            // fall through to substring-based extraction
+    private List<ProposedEvent> parseStrictSchedule(String jsonToParse) {
+        RawSchedule rawSchedule = gson.fromJson(jsonToParse, RawSchedule.class);
+        if (rawSchedule == null) {
+            throw new IllegalStateException("deserialized schedule was null");
+        }
+        if (rawSchedule.events == null) {
+            throw new IllegalStateException("missing 'events' field");
         }
 
+        List<ProposedEvent> parsed = rawSchedule.events.stream()
+                .map(this::toProposedEvent)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (parsed.isEmpty()) {
+            throw new IllegalStateException("Parsed schedule JSON from HF response contained 0 valid events.");
+        }
+        return parsed;
+    }
+
+    private List<ProposedEvent> salvageSchedule(String jsonToParse) {
+        List<ProposedEvent> salvaged = new ArrayList<>();
+        Pattern pattern = Pattern.compile("\\{[^{}]*?\\}", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(jsonToParse);
+        while (matcher.find()) {
+            String candidate = matcher.group();
+            if (!candidate.contains("\"day\"") || !candidate.contains("\"startTime\"")) {
+                continue;
+            }
+
+            try {
+                JsonReader reader = new JsonReader(new StringReader(candidate));
+                reader.setLenient(true);
+                RawEvent rawEvent = gson.fromJson(reader, RawEvent.class);
+                ProposedEvent event = toProposedEvent(rawEvent);
+                if (event != null) {
+                    salvaged.add(event);
+                }
+            } catch (Exception ignored) {
+                // Skip unparseable fragments
+            }
+        }
+
+        if (!salvaged.isEmpty()) {
+            System.out.printf("[LlmScheduleService] Salvage pass accepted %d event objects from partial JSON.%n", salvaged.size());
+        } else {
+            System.out.println("[LlmScheduleService] Salvage pass found no usable event objects.");
+        }
+        return salvaged;
+    }
+
+    private List<ProposedEvent> postProcessParsedEvents(List<ProposedEvent> events, List<FixedEventInput> fixedEvents) {
+        if (events == null) {
+            return Collections.emptyList();
+        }
+
+        Map<String, FixedEventInput> fixedByKey = new HashMap<>();
+        Set<String> preservedKeys = new HashSet<>();
+        List<ProposedEvent> result = new ArrayList<>();
+
+        if (fixedEvents != null) {
+            for (FixedEventInput fixed : fixedEvents) {
+                String key = fixedKey(fixed.getName(), fixed.getStartTime());
+                fixedByKey.put(key, fixed);
+                ProposedEvent locked = clampToWakingHours(new ProposedEvent(
+                        fixed.getDay(), fixed.getStartTime(), fixed.getDurationMinutes(), fixed.getName(), true));
+                if (locked != null && preservedKeys.add(slotKey(locked))) {
+                    result.add(locked);
+                }
+            }
+        }
+
+        for (ProposedEvent event : events) {
+            ProposedEvent clamped = clampToWakingHours(event);
+            if (clamped == null) {
+                continue;
+            }
+
+            String nameTimeKey = fixedKey(clamped.getName(), clamped.getStartTime());
+            FixedEventInput matchingFixed = fixedByKey.get(nameTimeKey);
+            if (matchingFixed != null && !clamped.getDay().equals(matchingFixed.getDay())) {
+                // Drop extra occurrences of a fixed event on the wrong day.
+                continue;
+            }
+
+            String slotKey = slotKey(clamped);
+            if (preservedKeys.contains(slotKey)) {
+                continue;
+            }
+            preservedKeys.add(slotKey);
+            result.add(clamped);
+        }
+
+        return result;
+    }
+
+    private String extractGeneratedText(String responseBody) {
         try {
             OpenAiLikeChatResponse chat = gson.fromJson(responseBody, OpenAiLikeChatResponse.class);
             if (chat != null && chat.choices != null && !chat.choices.isEmpty()) {
                 OpenAiChoice choice = chat.choices.get(0);
-                if (choice != null && choice.message != null && choice.message.content != null) {
-                    return Optional.of(choice.message.content);
+                if (choice != null && choice.message != null && choice.message.content != null && !choice.message.content.isBlank()) {
+                    String content = choice.message.content.trim();
+                    System.out.printf("[LlmScheduleService] Extracted text via OpenAI chat branch (len=%d).%n", content.length());
+                    return content;
                 }
             }
         } catch (Exception ignored) {
             // fall through
         }
 
+        try {
+            RawHuggingFaceResponse[] responses = gson.fromJson(responseBody, RawHuggingFaceResponse[].class);
+            if (responses != null && responses.length > 0 && responses[0].generated_text != null) {
+                System.out.println("[LlmScheduleService] Extracted text via HF array branch.");
+                return responses[0].generated_text;
+            }
+        } catch (Exception ignored) {
+            // fall through to substring-based extraction
+        }
+
         int start = responseBody.indexOf('{');
         int end = responseBody.lastIndexOf('}');
         if (start >= 0 && end > start) {
-            return Optional.of(responseBody.substring(start, end + 1));
+            String content = responseBody.substring(start, end + 1);
+            System.out.println("[LlmScheduleService] Extracted text via substring fallback branch.");
+            return content;
         }
-        return Optional.empty();
+        throw new IllegalStateException("Failed to extract generated text from HF response");
+    }
+
+    /**
+     * Helper for debugging HF parsing in isolation. Safe to invoke from an IDE run configuration.
+     */
+    @SuppressWarnings("unused")
+    private void debugOnceWithSamplePrompt() throws Exception {
+        String apiKey = System.getenv("HUGGINGFACE_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("Missing HUGGINGFACE_API_KEY for debug call");
+        }
+        String samplePrompt = "Generate a minimal schedule JSON with two events for testing.";
+        HfRequestSettings settings = new HfRequestSettings(200, 0.2, 0.85, false);
+        String response = callHuggingFace(samplePrompt, apiKey, resolveModelId(), settings);
+        List<ProposedEvent> events = parseProposedEvents(response, Collections.emptyList());
+        System.out.printf("[LlmScheduleService] Debug parsed %d events from HF.%n", events.size());
     }
 
     private ProposedEvent toProposedEvent(RawEvent raw) {
@@ -223,6 +359,31 @@ public class LlmScheduleService {
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    private ProposedEvent clampToWakingHours(ProposedEvent candidate) {
+        if (candidate == null) {
+            return null;
+        }
+        int durationSlots = Math.max(1, (int) Math.ceil(candidate.getDurationMinutes() / 60.0));
+        int latestStartHour = LATEST_REASONABLE_HOUR - durationSlots;
+        if (latestStartHour < EARLIEST_MORNING_HOUR) {
+            return null;
+        }
+
+        int startHour = candidate.getStartTime().getHour();
+        int minute = candidate.getStartTime().getMinute();
+        int safeHour = Math.min(Math.max(startHour, EARLIEST_MORNING_HOUR), latestStartHour);
+        return new ProposedEvent(candidate.getDay(), LocalTime.of(safeHour, minute),
+                candidate.getDurationMinutes(), candidate.getName(), candidate.isLocked());
+    }
+
+    private String slotKey(ProposedEvent event) {
+        return event.getDay().name() + "|" + event.getStartTime() + "|" + event.getName().toLowerCase(Locale.ROOT);
+    }
+
+    private String fixedKey(String name, LocalTime startTime) {
+        return name.toLowerCase(Locale.ROOT) + "@" + (startTime == null ? "" : startTime);
     }
 
     private List<ProposedEvent> fallbackSchedule(String routineSummary,
@@ -268,11 +429,12 @@ public class LlmScheduleService {
         HeuristicProfile profile = HeuristicProfile.from(summary);
         List<DayOfWeek> gymDays = List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY);
         List<DayOfWeek> projectDays = List.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY);
+        int morningStart = profile.preferMorning() ? EARLIEST_MORNING_HOUR : 8;
 
         if (profile.worker()) {
             for (DayOfWeek day : List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)) {
-                int morningHour = pickHour(profile.preferMorning() ? List.of(7, 8, 9) : List.of(9, 10), 9);
-                int afternoonHour = pickHour(List.of(13, 14, 15), 14);
+                int morningHour = pickHour(profile.preferMorning() ? List.of(7, 8, 9) : List.of(9, 10), 9, morningStart);
+                int afternoonHour = pickHour(List.of(13, 14, 15), 14, 8);
                 addEvent(result, dayCounts, occupiedKeys,
                         new ProposedEvent(day, LocalTime.of(morningHour, 0), 120, "Work - Focus", false), 3);
                 addEvent(result, dayCounts, occupiedKeys,
@@ -282,7 +444,7 @@ public class LlmScheduleService {
 
         if (profile.student()) {
             for (DayOfWeek day : List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY)) {
-                int studyHour = pickHour(profile.preferMorning() ? List.of(9, 10) : List.of(18, 19, 20), 18);
+                int studyHour = pickHour(profile.preferMorning() ? List.of(9, 10) : List.of(18, 19, 20), 18, morningStart);
                 addEvent(result, dayCounts, occupiedKeys,
                         new ProposedEvent(day, LocalTime.of(studyHour, 0), 120, "Study Session", false), 3);
             }
@@ -290,7 +452,7 @@ public class LlmScheduleService {
 
         if (profile.gym()) {
             for (DayOfWeek day : gymDays) {
-                int gymHour = pickHour(profile.preferMorning() ? List.of(6, 7) : List.of(17, 18, 19), profile.preferMorning() ? 7 : 18);
+                int gymHour = pickHour(profile.preferMorning() ? List.of(6, 7, 8) : List.of(17, 18, 19), profile.preferMorning() ? 7 : 18, EARLIEST_MORNING_HOUR);
                 addEvent(result, dayCounts, occupiedKeys,
                         new ProposedEvent(day, LocalTime.of(gymHour, 0), 60, "Gym / Workout", false), 3);
             }
@@ -307,7 +469,7 @@ public class LlmScheduleService {
         }
 
         for (DayOfWeek day : projectDays) {
-            int projectHour = pickHour(profile.preferNight() ? List.of(19, 20, 21) : List.of(17, 18, 19), 19);
+            int projectHour = pickHour(profile.preferNight() ? List.of(19, 20, 21) : List.of(17, 18, 19), 19, 12);
             addEvent(result, dayCounts, occupiedKeys,
                     new ProposedEvent(day, LocalTime.of(projectHour, 0), 120, "Project Time", false), 3);
         }
@@ -319,16 +481,14 @@ public class LlmScheduleService {
 
         for (DayOfWeek day : DayOfWeek.values()) {
             int perDayMax = 3;
-            while (dayCounts.getOrDefault(day, 0) < 2) {
-                int hour = profile.preferNight() ? pickHour(List.of(18, 19, 20, 21), 19)
-                        : pickHour(List.of(8, 9, 10, 11, 14, 15), 10);
+            int minimumBlocks = day.getValue() <= DayOfWeek.FRIDAY.getValue() ? 3 : 2;
+            while (dayCounts.getOrDefault(day, 0) < Math.min(perDayMax, minimumBlocks)) {
+                int hour = profile.preferNight() ? pickHour(List.of(18, 19, 20, 21), 19, 12)
+                        : pickHour(List.of(8, 9, 10, 11, 14, 15), 10, morningStart);
                 String name = profile.worker() ? "Task Block" : "Focus Session";
                 addEvent(result, dayCounts, occupiedKeys,
                         new ProposedEvent(day, LocalTime.of(hour, 0), 60, name, false), perDayMax);
             }
-        } else {
-            addEvent(result, dayCounts, occupiedKeys,
-                    new ProposedEvent(DayOfWeek.THURSDAY, LocalTime.of(profile.preferMorning() ? 7 : 18, 0), 45, "Walk & Stretch", false), 3);
         }
 
         System.out.printf("[LlmScheduleService] Fallback generated %d proposed events with semantic heuristics.%n", result.size());
@@ -340,27 +500,33 @@ public class LlmScheduleService {
                           Set<String> occupiedKeys,
                           ProposedEvent candidate,
                           int maxPerDay) {
-        if (candidate == null) {
+        ProposedEvent safeCandidate = clampToWakingHours(candidate);
+        if (safeCandidate == null) {
             return;
         }
-        DayOfWeek day = candidate.getDay();
-        String key = day.name() + "-" + candidate.getStartTime();
+        DayOfWeek day = safeCandidate.getDay();
+        String key = day.name() + "-" + safeCandidate.getStartTime();
         if (occupiedKeys.contains(key)) {
             return;
         }
         if (dayCounts.getOrDefault(day, 0) >= maxPerDay) {
             return;
         }
-        result.add(candidate);
+        result.add(safeCandidate);
         occupiedKeys.add(key);
         dayCounts.put(day, dayCounts.getOrDefault(day, 0) + 1);
     }
 
     private int pickHour(List<Integer> options, int fallback) {
-        if (options == null || options.isEmpty()) {
-            return fallback;
+        return pickHour(options, fallback, 0);
+    }
+
+    private int pickHour(List<Integer> options, int fallback, int minHour) {
+        int choice = fallback;
+        if (options != null && !options.isEmpty()) {
+            choice = options.get(random.nextInt(options.size()));
         }
-        return options.get(random.nextInt(options.size()));
+        return Math.max(minHour, choice);
     }
 
     private record HeuristicProfile(boolean preferMorning, boolean preferNight, boolean worker, boolean student,
@@ -370,7 +536,7 @@ public class LlmScheduleService {
             boolean morning = text.contains("morning") || text.contains("early");
             boolean night = text.contains("night") || text.contains("late");
             boolean worker = text.contains("work") || text.contains("job") || text.contains("office")
-                    || text.contains("9-5") || text.contains("9 to 5");
+                    || text.contains("9-5") || text.contains("9 to 5") || text.contains("9–5");
             boolean student = text.contains("student") || text.contains("class")
                     || text.contains("lecture") || text.contains("study");
             boolean gym = text.contains("gym") || text.contains("workout") || text.contains("exercise")

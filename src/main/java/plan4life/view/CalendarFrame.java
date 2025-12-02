@@ -303,13 +303,16 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             return;
         }
 
+        // --- NEW: keep a reference to the Event so we can inspect it later ---
+        Event event = null;
+
         // ---------- Reminder flow (Use Case 7) ----------
         if (calendarController != null) {
             // Use the description as the event title (fallback to "Activity")
             String title = description.isBlank() ? "Activity" : description;
 
             // Create an Event for this time range
-            Event event = new Event(title, start, end);
+            event = new Event(title, start, end);
 
             // 1) Let the controller know this event exists
             calendarController.registerEvent(event);
@@ -328,6 +331,32 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             blockOffTimeController.blockTime(
                     scheduleId, start, end, description, columnIndex
             );
+        }
+
+        // ---------- NEW: after blockTime, recolor cell based on urgency ----------
+        if (event != null && event.isImportant() && event.getUrgencyLevel() != null) {
+            // timeKey format must match Schedule/BlockedTime ("column:hour")
+            String timeKey = columnIndex + ":" + start.getHour();
+
+            java.awt.Color urgencyColor;
+            switch (event.getUrgencyLevel()) {
+                case LOW:
+                    urgencyColor = new java.awt.Color(8, 239, 204);   // same as ReminderDialog LOW
+                    break;
+                case MEDIUM:
+                    urgencyColor = new java.awt.Color(65, 243, 6);    // MEDIUM
+                    break;
+                case HIGH:
+                    urgencyColor = new java.awt.Color(200, 120, 0);   // HIGH
+                    break;
+                default:
+                    urgencyColor = java.awt.Color.GRAY;
+            }
+
+            boolean isLocked = currentSchedule != null
+                    && currentSchedule.isLockedKey(timeKey);
+
+            calendarPanel.colorCell(timeKey, urgencyColor, description, isLocked);
         }
     }
 }

@@ -220,6 +220,15 @@ public class ReminderDialog extends JDialog {
         }
 
         if (applyAllEventsRadio.isSelected()) {
+
+            // Show a single success message regardless of how many events
+            // are updated underneath.
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Set Reminder successfully.",
+                    "Message",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             controller.setImportantReminderForAllEvents(
                     minutesBefore,
                     alertType,
@@ -229,6 +238,15 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
         } else {
+
+            // Show a single success message regardless of how many events
+            // are updated underneath.
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Set Reminder successfully.",
+                    "Message",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             controller.setImportantReminderForEvent(
                     event,
                     minutesBefore,
@@ -247,6 +265,12 @@ public class ReminderDialog extends JDialog {
     private void onRemove() {
         if (event != null) {
             controller.cancelImportantReminder(event);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Reminder cancelled.",
+                    "Message",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
         dispose();
     }

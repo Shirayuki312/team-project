@@ -1,6 +1,8 @@
 package plan4life.solver;
 
 import plan4life.ai.ProposedEvent;
+import plan4life.ai.rules.ActivityTimeRule;
+import plan4life.ai.rules.ActivityTimeRules;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
 import plan4life.entities.ScheduledBlock;
@@ -166,42 +168,75 @@ public class ConstraintSolver {
     }
 
     private void placeFlexibleEvent(Schedule schedule, Map<Integer, boolean[]> occupancy, ProposedEvent event) {
-        int columnIndex = toColumnIndex(event.getDay());
-        int preferredHour = event.getStartTime().getHour();
+        int preferredColumn = toColumnIndex(event.getDay());
         int requiredSlots = requiredSlots(event.getDurationMinutes());
 
-        OptionalInt slot = findNearestAvailableSlot(occupancy, columnIndex, preferredHour, requiredSlots);
-        if (slot.isEmpty()) {
-            schedule.addUnplacedActivity(event.getName());
+        int windowStart = 0;
+        int windowEnd = HOURS_IN_DAY;
+        int preferredHour = event.getStartTime().getHour();
+        ActivityTimeRule rule = ActivityTimeRules.findRule(event.getName()).orElse(null);
+        if (rule != null) {
+            windowStart = rule.getWindowStartHour();
+            windowEnd = Math.min(HOURS_IN_DAY, rule.getWindowEndHour());
+            preferredHour = rule.choosePreferredHour(preferredHour, requiredSlots);
+
+            if (rule.mustPrecedeDinner()) {
+                int dinnerStart = findDinnerStartHour(schedule, preferredColumn);
+                if (dinnerStart >= 0) {
+                    windowEnd = Math.min(windowEnd, dinnerStart);
+                    int latestStart = Math.max(windowStart, dinnerStart - requiredSlots);
+                    preferredHour = Math.min(preferredHour, latestStart);
+                    preferredHour = Math.max(windowStart, preferredHour);
+                }
+            }
+        }
+
+        List<Integer> columnOrder = buildColumnOrderByOccupancy(occupancy, preferredColumn);
+        for (int columnIndex : columnOrder) {
+            OptionalInt slot = findNearestAvailableSlot(occupancy, columnIndex, preferredHour, requiredSlots,
+                    windowStart, windowEnd);
+            if (slot.isEmpty()) {
+                continue;
+            }
+
+            LocalTime placementStart = LocalTime.of(slot.getAsInt(), event.getStartTime().getMinute());
+            DayOfWeek placementDay = toDayOfWeek(columnIndex);
+            LocalDateTime start = toDateTime(placementDay, placementStart);
+            LocalDateTime end = start.plusMinutes(event.getDurationMinutes());
+
+            schedule.addUnlockedBlock(new ScheduledBlock(start, end, event.getName(), false, columnIndex));
+            schedule.addActivity(formatTimeKey(placementDay, placementStart), event.getName());
+
+            System.out.printf("[ConstraintSolver] placed -> %s %s (col %d)%n", placementDay, placementStart, columnIndex);
+
+            int startHour = placementStart.getHour();
+            int endHour = Math.min(HOURS_IN_DAY, startHour + requiredSlots);
+            markRangeAsOccupied(occupancy, columnIndex, startHour, endHour);
             return;
         }
 
-        LocalTime placementStart = LocalTime.of(slot.getAsInt(), event.getStartTime().getMinute());
-        LocalDateTime start = toDateTime(event.getDay(), placementStart);
-        LocalDateTime end = start.plusMinutes(event.getDurationMinutes());
-
-        schedule.addUnlockedBlock(new ScheduledBlock(start, end, event.getName(), false, columnIndex));
-        schedule.addActivity(formatTimeKey(event.getDay(), placementStart), event.getName());
-
-        System.out.printf("[ConstraintSolver] placed -> %s %s (col %d)%n", event.getDay(), placementStart, columnIndex);
-
-        int startHour = placementStart.getHour();
-        int endHour = Math.min(HOURS_IN_DAY, startHour + requiredSlots);
-        markRangeAsOccupied(occupancy, columnIndex, startHour, endHour);
+        schedule.addUnplacedActivity(event.getName());
     }
 
     private OptionalInt findNearestAvailableSlot(Map<Integer, boolean[]> occupancy,
                                                  int columnIndex,
                                                  int preferredHour,
-                                                 int requiredSlots) {
+                                                 int requiredSlots,
+                                                 int windowStart,
+                                                 int windowEnd) {
+        int maxStart = windowEnd - requiredSlots;
+        if (maxStart < windowStart) {
+            return OptionalInt.empty();
+        }
+
         Set<Integer> candidates = new LinkedHashSet<>();
         for (int delta = 0; delta < HOURS_IN_DAY; delta++) {
             int forward = preferredHour + delta;
             int backward = preferredHour - delta;
-            if (forward >= 0 && forward + requiredSlots <= HOURS_IN_DAY) {
+            if (forward >= windowStart && forward <= maxStart) {
                 candidates.add(forward);
             }
-            if (backward >= 0 && backward + requiredSlots <= HOURS_IN_DAY) {
+            if (backward >= windowStart && backward <= maxStart) {
                 candidates.add(backward);
             }
         }
@@ -224,6 +259,44 @@ public class ConstraintSolver {
                     columnIndex, preferredHour, chosen, limit);
         }
         return OptionalInt.of(chosen);
+    }
+
+    private int findDinnerStartHour(Schedule schedule, int columnIndex) {
+        OptionalInt locked = schedule.getLockedBlocks().stream()
+                .filter(block -> block.getColumnIndex() == columnIndex)
+                .filter(block -> ActivityTimeRules.isDinnerActivity(block.getActivityName()))
+                .mapToInt(block -> block.getStart().getHour())
+                .min();
+
+        OptionalInt flexible = schedule.getUnlockedBlocks().stream()
+                .filter(block -> block.getColumnIndex() == columnIndex)
+                .filter(block -> ActivityTimeRules.isDinnerActivity(block.getActivityName()))
+                .mapToInt(block -> block.getStart().getHour())
+                .min();
+
+        if (locked.isPresent() && flexible.isPresent()) {
+            return Math.min(locked.getAsInt(), flexible.getAsInt());
+        }
+        return locked.orElseGet(() -> flexible.orElse(-1));
+    }
+
+    private List<Integer> buildColumnOrderByOccupancy(Map<Integer, boolean[]> occupancy, int preferredColumn) {
+        Map<Integer, Integer> occupiedHours = countOccupiedHours(occupancy);
+        List<Integer> otherColumns = new ArrayList<>();
+        for (int column = 0; column < DAYS_IN_WEEK; column++) {
+            if (column != preferredColumn) {
+                otherColumns.add(column);
+            }
+        }
+
+        otherColumns.sort(Comparator
+                .comparing((Integer column) -> occupiedHours.getOrDefault(column, 0))
+                .thenComparingInt(column -> column));
+
+        List<Integer> ordered = new ArrayList<>();
+        ordered.add(preferredColumn);
+        ordered.addAll(otherColumns);
+        return ordered;
     }
 
     private void markRangeAsOccupied(Map<Integer, boolean[]> occupancy, int columnIndex, int startHour, int endHour) {
@@ -253,6 +326,10 @@ public class ConstraintSolver {
 
     private int toColumnIndex(DayOfWeek day) {
         return day.getValue() - 1;
+    }
+
+    private DayOfWeek toDayOfWeek(int columnIndex) {
+        return DayOfWeek.of(columnIndex + 1);
     }
 
     private LocalDateTime toDateTime(DayOfWeek day, LocalTime time) {

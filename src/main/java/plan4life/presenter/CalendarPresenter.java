@@ -44,7 +44,7 @@ public class CalendarPresenter implements
     @Override
     public void present(BlockOffTimeResponseModel response) {
         if (response.getUpdatedSchedule() != null) {
-            view.displaySchedule(response.getUpdatedSchedule());
+            view.applyBlockedTimeUpdate(response.getUpdatedSchedule(), response.getUpdatedBlockedTimes());
         }
         view.showMessage(response.getMessage());
     }

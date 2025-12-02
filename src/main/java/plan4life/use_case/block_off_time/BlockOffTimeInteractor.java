@@ -58,7 +58,8 @@ public class BlockOffTimeInteractor implements BlockOffTimeInputBoundary {
         }
         schedule.removeOverlappingActivities(
                 requestModel.getStart(),
-                requestModel.getEnd());
+                requestModel.getEnd(),
+                requestModel.getColumnIndex());
 
         // Create and add new BlockedTime to the schedule
         BlockedTime newBlock = new BlockedTime(
@@ -74,7 +75,7 @@ public class BlockOffTimeInteractor implements BlockOffTimeInputBoundary {
         BlockOffTimeResponseModel response = new BlockOffTimeResponseModel(
                 true,
                 "Time successfully blocked.",
-                schedule.getBlockedTimes(),
+                List.of(newBlock),
                 schedule
         );
 

@@ -1,6 +1,9 @@
 package plan4life.entities;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class Schedule {
@@ -165,14 +168,13 @@ public class Schedule {
 
     public boolean overlapsWithActivities(LocalDateTime start, LocalDateTime end, int columnIndex) {
         for (ScheduledBlock block : lockedBlocks) {
-            if (block.getColumnIndex() != columnIndex) continue;
-            if (block.overlaps(start, end)) {
+            if (block.overlaps(start, end, columnIndex)) {
                 return true;
             }
         }
 
         for (ScheduledBlock block : unlockedBlocks) {
-            if (block.overlaps(start, end)) {
+            if (block.overlaps(start, end, columnIndex)) {
                 return true;
             }
         }
@@ -180,10 +182,22 @@ public class Schedule {
         return false;
     }
 
-    public void removeOverlappingActivities(LocalDateTime start, LocalDateTime end) {
-        // This means remove block if block overlaps this range
-        unlockedBlocks.removeIf(block -> block.overlaps(start, end));
-        lockedBlocks.removeIf(block -> block.overlaps(start, end));
+    public void removeOverlappingActivities(LocalDateTime start, LocalDateTime end, int columnIndex) {
+        // Remove only the unlocked blocks in the matching column that overlap this range
+        unlockedBlocks.removeIf(block -> block.overlaps(start, end, columnIndex));
+
+        // Prune activities map only for the impacted column/time window, skipping locked entries
+        LocalTimeRange removalRange = new LocalTimeRange(start.toLocalTime(), end.toLocalTime());
+        activities.entrySet().removeIf(entry -> {
+            ParsedTimeKey parsed = parseTimeKey(entry.getKey());
+            if (parsed == null || parsed.columnIndex != columnIndex) {
+                return false;
+            }
+            if (lockedSlotKeys.contains(entry.getKey())) {
+                return false;
+            }
+            return removalRange.contains(parsed.time);
+        });
     }
 
     public void addBlockedTime(BlockedTime block) {
@@ -227,5 +241,69 @@ public class Schedule {
     // Just for JUnit tests. This would normally be package-protected or private.
     public void addUnlockedBlockForTest(ScheduledBlock block) {
         unlockedBlocks.add(block);
+    }
+
+    private ParsedTimeKey parseTimeKey(String timeKey) {
+        if (timeKey == null || !timeKey.contains(" ")) {
+            return null;
+        }
+
+        String[] parts = timeKey.split(" ");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        int columnIndex = toColumnIndex(parts[0]);
+        if (columnIndex < 0) {
+            return null;
+        }
+
+        try {
+            LocalTime time = LocalTime.parse(parts[1], DateTimeFormatter.ofPattern("HH:mm"));
+            return new ParsedTimeKey(columnIndex, time);
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    private int toColumnIndex(String dayAbbreviation) {
+        if (dayAbbreviation == null) {
+            return -1;
+        }
+
+        return switch (dayAbbreviation.trim().toUpperCase(Locale.ROOT)) {
+            case "MON", "MONDAY" -> 0;
+            case "TUE", "TUESDAY" -> 1;
+            case "WED", "WEDNESDAY" -> 2;
+            case "THU", "THURSDAY" -> 3;
+            case "FRI", "FRIDAY" -> 4;
+            case "SAT", "SATURDAY" -> 5;
+            case "SUN", "SUNDAY" -> 6;
+            default -> -1;
+        };
+    }
+
+    private static class ParsedTimeKey {
+        final int columnIndex;
+        final LocalTime time;
+
+        ParsedTimeKey(int columnIndex, LocalTime time) {
+            this.columnIndex = columnIndex;
+            this.time = time;
+        }
+    }
+
+    private static class LocalTimeRange {
+        private final LocalTime start;
+        private final LocalTime end;
+
+        LocalTimeRange(LocalTime start, LocalTime end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        boolean contains(LocalTime time) {
+            return !time.isBefore(start) && !time.isAfter(end);
+        }
     }
 }

@@ -29,6 +29,9 @@ import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import plan4life.ai.rules.ActivityTimeRule;
+import plan4life.ai.rules.ActivityTimeRules;
+
 /**
  * Generates a schedule proposal using a Hugging Face model.
  * Falls back to a deterministic schedule when no model is available.
@@ -62,9 +65,9 @@ public class LlmScheduleService {
         this.random = Objects.requireNonNull(random, "random");
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalTime.class, (JsonSerializer<LocalTime>) (src, typeOfSrc, context) ->
-                        src == null ? null : context.serialize(src.toString()))
+                        src == null ? null : context.serialize(TimeFormats.OPTIONAL_SECONDS.format(src)))
                 .registerTypeAdapter(LocalTime.class, (JsonDeserializer<LocalTime>) (json, type, context) ->
-                        json == null ? null : LocalTime.parse(json.getAsString()))
+                        json == null ? null : LocalTime.parse(json.getAsString(), TimeFormats.OPTIONAL_SECONDS))
                 .create();
     }
 
@@ -258,6 +261,7 @@ public class LlmScheduleService {
         Map<String, FixedEventInput> fixedByKey = new HashMap<>();
         Set<String> preservedKeys = new HashSet<>();
         List<ProposedEvent> result = new ArrayList<>();
+        Map<DayOfWeek, LocalTime> dinnerStarts = collectDinnerStarts(events, fixedEvents);
 
         if (fixedEvents != null) {
             for (FixedEventInput fixed : fixedEvents) {
@@ -277,19 +281,28 @@ public class LlmScheduleService {
                 continue;
             }
 
-            String nameTimeKey = fixedKey(clamped.getName(), clamped.getStartTime());
+            ProposedEvent adjusted = snapToPreferredWindow(clamped, dinnerStarts);
+            if (adjusted == null) {
+                continue;
+            }
+            ProposedEvent safe = clampToWakingHours(adjusted);
+            if (safe == null) {
+                continue;
+            }
+
+            String nameTimeKey = fixedKey(safe.getName(), safe.getStartTime());
             FixedEventInput matchingFixed = fixedByKey.get(nameTimeKey);
-            if (matchingFixed != null && !clamped.getDay().equals(matchingFixed.getDay())) {
+            if (matchingFixed != null && !safe.getDay().equals(matchingFixed.getDay())) {
                 // Drop extra occurrences of a fixed event on the wrong day.
                 continue;
             }
 
-            String slotKey = slotKey(clamped);
+            String slotKey = slotKey(safe);
             if (preservedKeys.contains(slotKey)) {
                 continue;
             }
             preservedKeys.add(slotKey);
-            result.add(clamped);
+            result.add(safe);
         }
 
         return result;
@@ -352,7 +365,7 @@ public class LlmScheduleService {
         }
         try {
             DayOfWeek day = DayOfWeek.valueOf(raw.day.toUpperCase(Locale.ROOT));
-            LocalTime start = LocalTime.parse(raw.startTime);
+            LocalTime start = LocalTime.parse(raw.startTime, TimeFormats.OPTIONAL_SECONDS);
             int duration = raw.durationMinutes == null ? 0 : raw.durationMinutes;
             boolean locked = raw.locked != null && raw.locked;
             return new ProposedEvent(day, start, duration, raw.name, locked);
@@ -376,6 +389,87 @@ public class LlmScheduleService {
         int safeHour = Math.min(Math.max(startHour, EARLIEST_MORNING_HOUR), latestStartHour);
         return new ProposedEvent(candidate.getDay(), LocalTime.of(safeHour, minute),
                 candidate.getDurationMinutes(), candidate.getName(), candidate.isLocked());
+    }
+
+    private ProposedEvent snapToPreferredWindow(ProposedEvent event, Map<DayOfWeek, LocalTime> dinnerStarts) {
+        if (event == null || event.isLocked()) {
+            return event;
+        }
+        ActivityTimeRule rule = ActivityTimeRules.findRule(event.getName()).orElse(null);
+        if (rule == null) {
+            return event;
+        }
+        if (rule.isWeekdaysOnly() && event.getDay().getValue() > DayOfWeek.FRIDAY.getValue()) {
+            return event;
+        }
+
+        LocalTime windowStart = LocalTime.of(rule.getWindowStartHour(), rule.getWindowStartMinute());
+        LocalTime windowEnd = LocalTime.of(rule.getWindowEndHour(), rule.getWindowEndMinute());
+        int durationMinutes = Math.max(0, event.getDurationMinutes());
+        LocalTime latestStart = windowEnd.minusMinutes(durationMinutes);
+        if (latestStart.isBefore(windowStart)) {
+            latestStart = windowStart;
+        }
+
+        LocalTime preferred = LocalTime.of(rule.getPreferredStartHour(), rule.getPreferredStartMinute());
+        LocalTime candidate = event.getStartTime();
+        if (candidate.isBefore(windowStart) || candidate.isAfter(latestStart)) {
+            candidate = preferred;
+        }
+
+        if (rule.mustPrecedeDinner()) {
+            LocalTime dinnerStart = dinnerStarts.get(event.getDay());
+            if (dinnerStart != null) {
+                LocalTime latestBeforeDinner = dinnerStart.minusMinutes(durationMinutes);
+                if (latestBeforeDinner.isBefore(windowStart)) {
+                    latestBeforeDinner = windowStart;
+                }
+                if (latestBeforeDinner.isBefore(latestStart)) {
+                    latestStart = latestBeforeDinner;
+                }
+                if (candidate.isAfter(latestStart)) {
+                    candidate = latestStart;
+                }
+            }
+        }
+
+        if (candidate.isBefore(windowStart)) {
+            candidate = windowStart;
+        }
+        if (candidate.isAfter(latestStart)) {
+            candidate = latestStart;
+        }
+
+        return new ProposedEvent(event.getDay(), candidate, event.getDurationMinutes(), event.getName(), false);
+    }
+
+    private Map<DayOfWeek, LocalTime> collectDinnerStarts(List<ProposedEvent> events, List<FixedEventInput> fixedEvents) {
+        Map<DayOfWeek, LocalTime> dinnerStarts = new EnumMap<>(DayOfWeek.class);
+        if (events != null) {
+            for (ProposedEvent event : events) {
+                if (event != null && ActivityTimeRules.isDinnerActivity(event.getName())) {
+                    considerDinnerStart(dinnerStarts, event.getDay(), event.getStartTime());
+                }
+            }
+        }
+        if (fixedEvents != null) {
+            for (FixedEventInput fixed : fixedEvents) {
+                if (fixed != null && ActivityTimeRules.isDinnerActivity(fixed.getName())) {
+                    considerDinnerStart(dinnerStarts, fixed.getDay(), fixed.getStartTime());
+                }
+            }
+        }
+        return dinnerStarts;
+    }
+
+    private void considerDinnerStart(Map<DayOfWeek, LocalTime> dinnerStarts, DayOfWeek day, LocalTime start) {
+        if (day == null || start == null) {
+            return;
+        }
+        LocalTime existing = dinnerStarts.get(day);
+        if (existing == null || start.isBefore(existing)) {
+            dinnerStarts.put(day, start);
+        }
     }
 
     private String slotKey(ProposedEvent event) {

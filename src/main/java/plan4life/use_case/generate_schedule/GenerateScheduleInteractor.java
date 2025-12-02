@@ -5,6 +5,7 @@ import plan4life.ai.LlmScheduleService;
 import plan4life.ai.ProposedEvent;
 import plan4life.ai.RagRetriever;
 import plan4life.ai.RoutineEventInput;
+import plan4life.ai.TimeFormats;
 import plan4life.data_access.ScheduleDataAccessInterface;
 import plan4life.entities.Schedule;
 import plan4life.solver.ConstraintSolver;
@@ -137,8 +138,8 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             return Optional.empty();
         }
 
-        LocalTime start = LocalTime.parse(matcher.group(2));
-        LocalTime end = matcher.group(3) == null ? null : LocalTime.parse(matcher.group(3));
+        LocalTime start = LocalTime.parse(matcher.group(2), TimeFormats.OPTIONAL_SECONDS);
+        LocalTime end = matcher.group(3) == null ? null : LocalTime.parse(matcher.group(3), TimeFormats.OPTIONAL_SECONDS);
         int durationMinutes = parseDuration(start, end, matcher.group(4));
         String name = matcher.group(5).trim();
 

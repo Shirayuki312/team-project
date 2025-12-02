@@ -21,9 +21,9 @@ public class PromptBuilder {
         this.ragRetriever = ragRetriever;
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalTime.class, (JsonSerializer<LocalTime>) (src, typeOfSrc, context) ->
-                        src == null ? null : context.serialize(src.toString()))
+                        src == null ? null : context.serialize(TimeFormats.OPTIONAL_SECONDS.format(src)))
                 .registerTypeAdapter(LocalTime.class, (JsonDeserializer<LocalTime>) (json, type, context) ->
-                        json == null ? null : LocalTime.parse(json.getAsString()))
+                        json == null ? null : LocalTime.parse(json.getAsString(), TimeFormats.OPTIONAL_SECONDS))
                 .create();
     }
 
@@ -44,7 +44,8 @@ public class PromptBuilder {
         builder.append("1) You are given a list of fixed events. Each fixed event must appear exactly once at the specified day and time. Do not create additional events with the same name on other days unless explicitly described in the routine.\n");
         builder.append("2) Mark these fixed events with \"locked\": true and do not change their day, startTime, or duration.\n");
         builder.append("3) Do not schedule events before 06:00 or after 22:00.\n");
-        builder.append("4) For a standard workweek profile, distribute events across all weekdays Monday–Friday. Aim for at least 3–5 events per weekday between 06:00 and 22:00, including 1–2 focus/task blocks and a lunch break on most weekdays. Respect the persona (morning vs night) when picking times.\n\n");
+        builder.append("4) For a standard workweek profile, distribute events across all weekdays Monday–Friday. Aim for at least 3–5 events per weekday between 06:00 and 22:00, including 1–2 focus/task blocks and a lunch break on most weekdays. Respect the persona (morning vs night) when picking times.\n");
+        builder.append("5) Typical times: lunch near noon within 11:30–14:00; dinner with family about 19:00 within 18:00–20:00; dinner prep 16:00–18:00 before dinner; standard workdays 09:00–17:00.\n\n");
 
         builder.append("User routine summary: ").append(routineSummary == null ? "" : routineSummary).append("\n\n");
         builder.append("Flexible routine hints: ").append(gson.toJson(routineEvents)).append("\n");

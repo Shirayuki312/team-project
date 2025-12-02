@@ -242,6 +242,7 @@ public class CalendarController {
                 // This event already has an identical reminder; do NOT re-schedule it.
                 continue;
             }
+
             setImportantReminderForEvent(
                     e,
                     minutesBefore,
@@ -252,6 +253,7 @@ public class CalendarController {
                     playSound
             );
         }
+
     }
 
 

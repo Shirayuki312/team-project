@@ -1,6 +1,6 @@
-package plan4life.view;
+package plan4life.entities;
 
-import java.awt.Color;
+import java.awt.*;
 import java.time.LocalDateTime;
 
 /**

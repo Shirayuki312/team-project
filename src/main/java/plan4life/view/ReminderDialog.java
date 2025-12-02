@@ -1,7 +1,8 @@
 package plan4life.view;
 
+import plan4life.entities.Event;
 import plan4life.controller.CalendarController;
-import plan4life.view.Event.UrgencyLevel;
+import plan4life.entities.Event.UrgencyLevel;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxUI;
@@ -232,6 +233,7 @@ public class ReminderDialog extends JDialog {
                     JOptionPane.INFORMATION_MESSAGE
             );
             controller.setImportantReminderForAllEvents(
+                    event,          // NEW: sourceEvent
                     minutesBefore,
                     alertType,
                     urgencyLevel,

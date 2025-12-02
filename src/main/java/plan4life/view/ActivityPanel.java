@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import plan4life.controller.CalendarController;
-import plan4life.view.Event;
+import plan4life.entities.Event;
 import plan4life.view.ReminderDialog;
 
 import java.time.LocalDate;

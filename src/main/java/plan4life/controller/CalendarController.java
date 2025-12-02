@@ -1,7 +1,7 @@
 package plan4life.controller;
 
-import plan4life.view.Event;
-import plan4life.view.Event.UrgencyLevel;
+import plan4life.entities.Event;
+import plan4life.entities.Event.UrgencyLevel;
 
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
@@ -45,6 +45,8 @@ public class CalendarController {
      * All events known to the controller (for "apply to all events").
      */
     private final List<Event> events = new ArrayList<>();
+    // NEW: track which events already have a reminder configured
+    private final Set<Event> eventsWithReminder = new HashSet<>();
     private final SetReminderInputBoundary setReminderInteractor;
 
 
@@ -148,6 +150,8 @@ public class CalendarController {
                 playSound,
                 true    // isImportant = true
         );
+        // NEW: remember that this event now has a reminder
+        eventsWithReminder.add(event);
     }
 
 
@@ -189,7 +193,8 @@ public class CalendarController {
     }
 
 
-    public void setImportantReminderForAllEvents(int minutesBefore,
+    public void setImportantReminderForAllEvents(Event sourceEvent,
+                                                 int minutesBefore,
                                                  String alertType,
                                                  UrgencyLevel urgencyLevel,
                                                  boolean sendMessage,
@@ -206,6 +211,16 @@ public class CalendarController {
         }
 
         for (Event e : events) {
+
+            // NEW: only touch
+            //  - the current sourceEvent, OR
+            //  - events that already had a reminder before
+            if (e != sourceEvent && !eventsWithReminder.contains(e)) {
+                // This event never had a reminder, and it's not the one user is editing now.
+                // Do NOT auto-add reminder for it.
+                continue;
+            }
+
             boolean sameMinutes =
                     e.getReminderMinutesBefore() != null
                             && e.getReminderMinutesBefore() == minutesBefore;
@@ -280,6 +295,8 @@ public class CalendarController {
                 false,
                 false   // isImportant = false -> cancel
         );
+        // NEW: this event no longer has an active reminder
+        eventsWithReminder.remove(event);
     }
 }
 

@@ -34,9 +34,17 @@ public class PromptBuilder {
                                       List<RagRetriever.RoutineExample> providedExamples) {
         StringBuilder builder = new StringBuilder();
         builder.append("You are a friendly assistant who proposes a weekly schedule.\n");
-        builder.append("Return ONLY JSON with an array named \"events\" where each item has: \n");
-        builder.append("{\"day\": \"MONDAY\", \"startTime\": \"09:00\", \"durationMinutes\": 60, \"name\": \"Task\", \"locked\": false}.\n");
+        builder.append("Return ONLY a single JSON object of the form { \"events\": [ ... ] }.\n");
+        builder.append("Do not include comments, explanations, or ellipses. No trailing text.\n");
+        builder.append("Every event must include: \"day\" (e.g. \"MONDAY\"), \"startTime\" (\"HH:MM\"), \"durationMinutes\" (integer), \"name\" (string), and \"locked\" (boolean).\n");
+        builder.append("Example event: {\"day\": \"MONDAY\", \"startTime\": \"09:00\", \"durationMinutes\": 60, \"name\": \"Task\", \"locked\": false}.\n");
         builder.append("Use 24-hour time. Keep locked=true for fixed items and locked=false for flexible suggestions.\n\n");
+
+        builder.append("Rules to follow strictly:\n");
+        builder.append("1) You are given a list of fixed events. Each fixed event must appear exactly once at the specified day and time. Do not create additional events with the same name on other days unless explicitly described in the routine.\n");
+        builder.append("2) Mark these fixed events with \"locked\": true and do not change their day, startTime, or duration.\n");
+        builder.append("3) Do not schedule events before 06:00 or after 22:00.\n");
+        builder.append("4) For a standard workweek profile, distribute events across all weekdays Monday–Friday. Aim for at least 3–5 events per weekday between 06:00 and 22:00, including 1–2 focus/task blocks and a lunch break on most weekdays. Respect the persona (morning vs night) when picking times.\n\n");
 
         builder.append("User routine summary: ").append(routineSummary == null ? "" : routineSummary).append("\n\n");
         builder.append("Flexible routine hints: ").append(gson.toJson(routineEvents)).append("\n");

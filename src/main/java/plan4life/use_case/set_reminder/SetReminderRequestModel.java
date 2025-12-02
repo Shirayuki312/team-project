@@ -3,53 +3,53 @@ package plan4life.use_case.set_reminder;
 import java.time.LocalDateTime;
 
 /**
- * Data passed from controller to interactor for creating / canceling a reminder.
+ * Input data for the SetReminder use case.
  */
 public class SetReminderRequestModel {
 
-    private final String eventTitle;
-    private final LocalDateTime eventStart;
-    private final LocalDateTime eventEnd;
+    private final String title;
+    private final LocalDateTime start;
+    private final LocalDateTime end;
     private final int minutesBefore;
     private final String alertType;
-    private final String urgency; // "LOW", "MEDIUM", "HIGH"
+    private final String urgencyLevel;
     private final boolean sendMessage;
     private final boolean sendEmail;
     private final boolean playSound;
-    private final boolean active;
+    private final boolean important;
 
-    public SetReminderRequestModel(String eventTitle,
-                                   LocalDateTime eventStart,
-                                   LocalDateTime eventEnd,
+    public SetReminderRequestModel(String title,
+                                   LocalDateTime start,
+                                   LocalDateTime end,
                                    int minutesBefore,
                                    String alertType,
-                                   String urgency,
+                                   String urgencyLevel,
                                    boolean sendMessage,
                                    boolean sendEmail,
                                    boolean playSound,
-                                   boolean active) {
-        this.eventTitle = eventTitle;
-        this.eventStart = eventStart;
-        this.eventEnd = eventEnd;
+                                   boolean important) {
+        this.title = title;
+        this.start = start;
+        this.end = end;
         this.minutesBefore = minutesBefore;
         this.alertType = alertType;
-        this.urgency = urgency;
+        this.urgencyLevel = urgencyLevel;
         this.sendMessage = sendMessage;
         this.sendEmail = sendEmail;
         this.playSound = playSound;
-        this.active = active;
+        this.important = important;
     }
 
-    public String getEventTitle() {
-        return eventTitle;
+    public String getTitle() {
+        return title;
     }
 
-    public LocalDateTime getEventStart() {
-        return eventStart;
+    public LocalDateTime getStart() {
+        return start;
     }
 
-    public LocalDateTime getEventEnd() {
-        return eventEnd;
+    public LocalDateTime getEnd() {
+        return end;
     }
 
     public int getMinutesBefore() {
@@ -60,8 +60,8 @@ public class SetReminderRequestModel {
         return alertType;
     }
 
-    public String getUrgency() {
-        return urgency;
+    public String getUrgencyLevel() {
+        return urgencyLevel;
     }
 
     public boolean isSendMessage() {
@@ -76,15 +76,7 @@ public class SetReminderRequestModel {
         return playSound;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Utility: build the reminder ID (same rule as entities.Reminder).
-     */
-    public String buildReminderId() {
-        return eventTitle + "|" + eventStart;
+    public boolean isImportant() {
+        return important;
     }
 }
-

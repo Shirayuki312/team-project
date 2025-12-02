@@ -8,31 +8,30 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Simple in-memory implementation of ReminderDataAccessInterface.
- * This is enough for your course project and unit tests.
+ * Simple in-memory DAO for storing reminders.
+ * This keeps timers & reminder entities in memory only.
  */
 public class InMemoryReminderDAO implements ReminderDataAccessInterface {
 
     private final Map<String, Reminder> storage = new HashMap<>();
 
     @Override
-    public void save(Reminder reminder) {
-        if (reminder == null) return;
+    public synchronized void saveReminder(Reminder reminder) {
         storage.put(reminder.getId(), reminder);
     }
 
     @Override
-    public Reminder findById(String id) {
-        return storage.get(id);
-    }
-
-    @Override
-    public void deleteById(String id) {
+    public synchronized void deleteReminder(String id) {
         storage.remove(id);
     }
 
     @Override
-    public List<Reminder> findAll() {
+    public synchronized Reminder getReminder(String id) {
+        return storage.get(id);
+    }
+
+    @Override
+    public synchronized List<Reminder> getAllReminders() {
         return new ArrayList<>(storage.values());
     }
 }

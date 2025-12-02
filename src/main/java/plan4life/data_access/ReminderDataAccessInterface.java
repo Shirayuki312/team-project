@@ -4,16 +4,13 @@ import plan4life.entities.Reminder;
 
 import java.util.List;
 
-/**
- * Gateway interface for storing and loading Reminder entities.
- */
 public interface ReminderDataAccessInterface {
 
-    void save(Reminder reminder);
+    void saveReminder(Reminder reminder);
 
-    Reminder findById(String id);
+    void deleteReminder(String id);
 
-    void deleteById(String id);
+    Reminder getReminder(String id);
 
-    List<Reminder> findAll();
+    List<Reminder> getAllReminders();
 }

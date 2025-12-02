@@ -3,71 +3,67 @@ package plan4life.entities;
 import java.time.LocalDateTime;
 
 /**
- * Domain entity that represents a persisted reminder for an event.
- *
- * Note: we keep this entity independent from the UI Event class
- * (plan4life.view.Event) to respect Clean Architecture layering.
+ * Domain entity representing a reminder associated with an event.
  */
 public class Reminder {
 
-    /**
-     * Simple string ID. In this project we use:
-     *   id = eventTitle + "|" + eventStart.toString()
-     */
     private final String id;
-
-    private final String eventTitle;
-    private final LocalDateTime eventStart;
-    private final LocalDateTime eventEnd;
-
+    private final String title;
+    private final LocalDateTime start;
+    private final LocalDateTime end;
+    private final LocalDateTime reminderTime;
     private final int minutesBefore;
-    private final String alertType;   // e.g. "Message with sound"
-    private final String urgency;     // "LOW", "MEDIUM", "HIGH"
-
+    private final String alertType;
+    private final String urgencyLevel;
     private final boolean sendMessage;
     private final boolean sendEmail;
     private final boolean playSound;
-
-    private final boolean active;
+    private final boolean important;
 
     public Reminder(String id,
-                    String eventTitle,
-                    LocalDateTime eventStart,
-                    LocalDateTime eventEnd,
+                    String title,
+                    LocalDateTime start,
+                    LocalDateTime end,
+                    LocalDateTime reminderTime,
                     int minutesBefore,
                     String alertType,
-                    String urgency,
+                    String urgencyLevel,
                     boolean sendMessage,
                     boolean sendEmail,
                     boolean playSound,
-                    boolean active) {
+                    boolean important) {
         this.id = id;
-        this.eventTitle = eventTitle;
-        this.eventStart = eventStart;
-        this.eventEnd = eventEnd;
+        this.title = title;
+        this.start = start;
+        this.end = end;
+        this.reminderTime = reminderTime;
         this.minutesBefore = minutesBefore;
         this.alertType = alertType;
-        this.urgency = urgency;
+        this.urgencyLevel = urgencyLevel;
         this.sendMessage = sendMessage;
         this.sendEmail = sendEmail;
         this.playSound = playSound;
-        this.active = active;
+        this.important = important;
     }
 
     public String getId() {
         return id;
     }
 
-    public String getEventTitle() {
-        return eventTitle;
+    public String getTitle() {
+        return title;
     }
 
-    public LocalDateTime getEventStart() {
-        return eventStart;
+    public LocalDateTime getStart() {
+        return start;
     }
 
-    public LocalDateTime getEventEnd() {
-        return eventEnd;
+    public LocalDateTime getEnd() {
+        return end;
+    }
+
+    public LocalDateTime getReminderTime() {
+        return reminderTime;
     }
 
     public int getMinutesBefore() {
@@ -78,8 +74,8 @@ public class Reminder {
         return alertType;
     }
 
-    public String getUrgency() {
-        return urgency;
+    public String getUrgencyLevel() {
+        return urgencyLevel;
     }
 
     public boolean isSendMessage() {
@@ -94,7 +90,7 @@ public class Reminder {
         return playSound;
     }
 
-    public boolean isActive() {
-        return active;
+    public boolean isImportant() {
+        return important;
     }
 }

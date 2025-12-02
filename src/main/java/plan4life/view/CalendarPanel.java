@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Locale;
 
 public class CalendarPanel extends JPanel {
+    private static final int START_HOUR = 6;
     private JPanel[][] cells;
     private JPanel gridPanel;
     private JPanel dayHeaderPanel;
@@ -32,7 +33,7 @@ public class CalendarPanel extends JPanel {
     private void buildGrid(int columns) {
         removeAll();
         currentColumns = columns;
-        int rows = 24;
+        int rows = 24 - START_HOUR;
 
         // Wrap grid with headers so users can see day labels across the top and hour labels on the left.
         setLayout(new BorderLayout(4, 4));
@@ -47,7 +48,7 @@ public class CalendarPanel extends JPanel {
 
         timeLabelPanel = new JPanel(new GridLayout(rows, 1));
         for (int hour = 0; hour < rows; hour++) {
-            JLabel hourLabel = new JLabel(String.format("%02d:00", hour), SwingConstants.RIGHT);
+            JLabel hourLabel = new JLabel(String.format("%02d:00", START_HOUR + hour), SwingConstants.RIGHT);
             hourLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
             timeLabelPanel.add(hourLabel);
         }
@@ -91,12 +92,12 @@ public class CalendarPanel extends JPanel {
 
                     // TODO: Using today's date as a placeholder. Replace with actual selected calendar date once implemented.
                     LocalDateTime start = now
-                            .withHour(min)
+                            .withHour(toHour(min))
                             .withMinute(0)
                             .withSecond(0)
                             .withNano(0);
                     LocalDateTime end = now
-                            .withHour(max + 1)
+                            .withHour(toHour(max + 1))
                             .withMinute(0)
                             .withSecond(0)
                             .withNano(0);
@@ -148,23 +149,23 @@ public class CalendarPanel extends JPanel {
     }
 
     private int getRowFromY(int y) {
-        for (int r = 0; r < 24; r++) {
+        for (int r = 0; r < cells.length; r++) {
             Rectangle bounds = cells[r][0].getBounds();
             if (y >= bounds.y && y < bounds.y + bounds.height) {
                 return r;
             }
         }
 
-        Rectangle last = cells[23][0].getBounds();
+        Rectangle last = cells[cells.length - 1][0].getBounds();
         if (y > last.y + last.height + 3) {
-            return 23;
+            return cells.length - 1;
         }
 
-        return Math.max(0, Math.min(23, 23 * y / getHeight()));  // Approximate row if cursor is between cells
+        return Math.max(0, Math.min(cells.length - 1, cells.length * y / getHeight()));  // Approximate row if cursor is between cells
     }
 
     private void updateSelection() {
-        for (int r = 0; r < 24; r++) {
+        for (int r = 0; r < cells.length; r++) {
             for (int c = 0; c < currentColumns; c++) {
                 cells[r][c].setBackground(Color.WHITE);
             }
@@ -183,7 +184,7 @@ public class CalendarPanel extends JPanel {
     }
 
     public void clear() {
-        for (int r = 0; r < 24; r++) {
+        for (int r = 0; r < cells.length; r++) {
             for (int c = 0; c < currentColumns; c++) {
                 cells[r][c].setBackground(Color.WHITE);
                 cells[r][c].removeAll();
@@ -205,7 +206,8 @@ public class CalendarPanel extends JPanel {
                 return;
             }
 
-            JPanel cell = cells[parsed.hour][columnIndex];
+            int rowIndex = toRow(parsed.hour);
+            JPanel cell = cells[rowIndex][columnIndex];
             cell.removeAll();
             cell.setBackground(color);
             cell.setLayout(new BorderLayout());
@@ -237,7 +239,7 @@ public class CalendarPanel extends JPanel {
             cell.revalidate();
             cell.repaint();
 
-            System.out.printf("[CalendarPanel] colorCell %s -> row %d, col %d, locked=%s%n", time, parsed.hour, columnIndex, locked);
+            System.out.printf("[CalendarPanel] colorCell %s -> row %d, col %d, locked=%s%n", time, rowIndex, columnIndex, locked);
         } catch (Exception ex) {
             System.out.printf("[CalendarPanel] Failed to color cell for %s due to %s%n", time, ex.getMessage());
         }
@@ -293,6 +295,24 @@ public class CalendarPanel extends JPanel {
         return day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault());
     }
 
+    private int toRow(int hour) {
+        int row = hour - START_HOUR;
+        if (cells == null || cells.length == 0) {
+            return Math.max(0, row);
+        }
+        int max = cells.length - 1;
+        return Math.min(Math.max(0, row), max);
+    }
+
+    private int toHour(int row) {
+        int safeRow = Math.max(0, row);
+        if (cells != null && cells.length > 0) {
+            safeRow = Math.min(safeRow, cells.length - 1);
+        }
+        int hour = START_HOUR + safeRow;
+        return Math.min(23, hour);
+    }
+
 
     public void colorBlockedRange(LocalDateTime start, LocalDateTime end, int columnIndex) {
         int startHour = start.getHour();
@@ -300,12 +320,14 @@ public class CalendarPanel extends JPanel {
 
         int min = Math.max(0, startHour);
         int max = Math.min(23, endHour - 1);
+        int minRow = toRow(min);
+        int maxRow = toRow(max);
 
         if (columnIndex < 0 || columnIndex >= currentColumns) {
             return;
         }
 
-        for (int r = min; r <= max; r++) {
+        for (int r = minRow; r <= maxRow; r++) {
             cells[r][columnIndex].setBackground(Color.GRAY);
             cells[r][columnIndex].removeAll();
             cells[r][columnIndex].add(new JLabel("Blocked"));

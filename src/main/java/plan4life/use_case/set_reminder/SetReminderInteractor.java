@@ -18,15 +18,15 @@ import java.util.TimerTask;
  */
 public class SetReminderInteractor implements SetReminderInputBoundary {
 
-    private final ReminderDataAccessInterface reminderDAO;
+    private final ReminderDataAccessInterface reminderDAI;
     private final SetReminderOutputBoundary presenter;
 
     // Keeps track of active timers by reminder id
     private final Map<String, Timer> timers = new HashMap<>();
 
-    public SetReminderInteractor(ReminderDataAccessInterface reminderDAO,
+    public SetReminderInteractor(ReminderDataAccessInterface reminderDAI,
                                  SetReminderOutputBoundary presenter) {
-        this.reminderDAO = reminderDAO;
+        this.reminderDAI = reminderDAI;
         this.presenter = presenter;
     }
 
@@ -45,9 +45,6 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
 
     @Override
     public void setReminder(SetReminderRequestModel requestModel) {
-        System.out.println("DEBUG sendMsg=" + requestModel.isSendMessage()
-                + ", sendEmail=" + requestModel.isSendEmail()
-                + ", playSound=" + requestModel.isPlaySound());
         String id = buildReminderId(requestModel);
 
         // Cancel any existing timer for this reminder
@@ -73,7 +70,7 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
         );
 
         // Persist
-        reminderDAO.saveReminder(reminder);
+        reminderDAI.saveReminder(reminder);
 
         SetReminderResponseModel scheduledResponse =
                 SetReminderResponseModel.fromEntity(reminder);
@@ -107,7 +104,7 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
         String id = buildReminderId(requestModel);
 
         cancelTimer(id);
-        reminderDAO.deleteReminder(id);
+        reminderDAI.deleteReminder(id);
 
         // Build a lightweight Reminder object just for presenter
         Reminder dummy = new Reminder(

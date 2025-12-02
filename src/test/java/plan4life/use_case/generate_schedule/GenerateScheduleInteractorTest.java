@@ -2,175 +2,145 @@ package plan4life.use_case.generate_schedule;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import plan4life.ai.FixedEventInput;
+import plan4life.ai.LlmScheduleService;
+import plan4life.ai.ProposedEvent;
+import plan4life.ai.RagRetriever;
+import plan4life.ai.RagRetriever.RoutineExample;
+import plan4life.ai.RoutineEventInput;
+import plan4life.data_access.ScheduleDataAccessInterface;
+import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
+import plan4life.solver.ConstraintSolver;
 
-import java.util.*;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GenerateScheduleInteractorTest {
 
     private MockPresenter presenter;
-    private MockGenerationService mockService;
+    private TrackingRagRetriever ragRetriever;
+    private StubLlmScheduleService llmService;
+    private CapturingConstraintSolver solver;
+    private InMemoryScheduleDAO scheduleDAO;
     private GenerateScheduleInteractor interactor;
 
     @BeforeEach
     void setup() {
         presenter = new MockPresenter();
-        mockService = new MockGenerationService();
-        interactor = new GenerateScheduleInteractor(presenter, mockService);
+        ragRetriever = new TrackingRagRetriever();
+        llmService = new StubLlmScheduleService();
+        solver = new CapturingConstraintSolver();
+        scheduleDAO = new InMemoryScheduleDAO();
+        interactor = new GenerateScheduleInteractor(presenter, ragRetriever, llmService, solver, scheduleDAO);
     }
 
-    // ------------------------------------------------------------
-    // 1. Interactor Tests
-    // ------------------------------------------------------------
     @Test
-    void testGenerateSchedule_basic() {
-        Map<String, String> fixed = new HashMap<>();
-        fixed.put("7:00-8:00", "Breakfast");
-        fixed.put("12:00-13:00", "Lunch");
-
-        List<String> free = Arrays.asList(
-                "Jogging:1.0",
-                "Study:2"
-        );
-
-        GenerateScheduleRequestModel request =
-                new GenerateScheduleRequestModel(
-                        "Study, Gym, Relax",
-                        fixed,
-                        free
-                );
+    void execute_usesRagAndSolverPipeline() {
+        String fixed = "Mon 09:00-10:00 60 Gym";
+        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(
+                "Test routine", fixed, Collections.emptyList());
 
         interactor.execute(request);
 
-        assertTrue(presenter.wasCalled);
-        assertNotNull(presenter.lastResponse);
-        Schedule schedule = presenter.lastResponse.getSchedule();
-
-        // Mock generator always adds this
-        assertEquals("MOCK_ACTIVITY", schedule.getActivities().get("09:00"));
-
-        // Fixed preserved
-        assertEquals("Breakfast", schedule.getActivities().get("7:00-8:00"));
-        assertEquals("Lunch", schedule.getActivities().get("12:00-13:00"));
-
-        // Free activities passed correctly
-        assertTrue(mockService.assigned.contains("Jogging"));
-        assertTrue(mockService.assigned.contains("Study"));
-
-        assertEquals("Study, Gym, Relax", mockService.lastDescription);
-        assertEquals(fixed, mockService.lastFixed);
+        assertTrue(ragRetriever.invoked);
+        assertEquals("Test routine", ragRetriever.lastSummary);
+        assertEquals(1, llmService.receivedFixedEvents.size());
+        assertEquals(DayOfWeek.MONDAY, llmService.receivedFixedEvents.get(0).getDay());
+        assertTrue(solver.called);
+        assertNotNull(presenter.lastResponse.getSchedule());
+        assertEquals(scheduleDAO.savedSchedule, presenter.lastResponse.getSchedule());
+        assertEquals("Some activities could not be placed and were left unassigned.\n" +
+                        "Generated via Hugging Face model 'mock-model' (1 events parsed)",
+                presenter.lastResponse.getMessage());
     }
 
     @Test
-    void testGenerateSchedule_nullRequest() {
-        interactor.execute(null);
+    void execute_rejectsEmptyInput() {
+        GenerateScheduleRequestModel request = new GenerateScheduleRequestModel("   ", "  ", Collections.emptyList());
 
-        assertTrue(presenter.wasCalled);
-        assertNotNull(presenter.lastResponse);
+        interactor.execute(request);
 
-        Schedule s = presenter.lastResponse.getSchedule();
-        assertNotNull(s);
-        assertTrue(s.getActivities().isEmpty());
+        assertNull(presenter.lastResponse.getSchedule());
+        assertEquals("Please describe your routine or add at least one fixed activity.", presenter.lastResponse.getMessage());
     }
-
-    // ------------------------------------------------------------
-    // 2. Mock Service Tests
-    // ------------------------------------------------------------
-    @Test
-    void testGenerateCreatesSchedule() {
-        Map<String, String> fixed = Map.of("10:00", "Meeting");
-
-        Schedule s = mockService.generate("Routine text", fixed);
-
-        assertNotNull(s);
-        assertEquals("Meeting", s.getActivities().get("10:00"));
-        assertEquals("Routine text", mockService.lastDescription);
-        assertEquals(fixed, mockService.lastFixed);
-    }
-
-    @Test
-    void testFindFreeSlotDoesNotThrow() {
-        Schedule schedule = new Schedule();
-        assertDoesNotThrow(() -> mockService.findFreeSlot(schedule));
-    }
-
-    @Test
-    void testAssignActivityDoesNotCrash() {
-        Schedule s = new Schedule();
-        assertDoesNotThrow(() ->
-                mockService.assignActivityToSlot(s, "Study", 1.0f)
-        );
-    }
-
-    @Test
-    void testAssignActivityActuallyAddsSomething() {
-        Schedule s = new Schedule();
-
-        mockService.assignActivityToSlot(s, "Study", 1.0f);
-
-        assertTrue(
-                s.getActivities().values().stream().anyMatch(v -> v.contains("Study"))
-        );
-    }
-
-    // ------------------------------------------------------------
-    // Mock Classes
-    // ------------------------------------------------------------
 
     private static class MockPresenter implements GenerateScheduleOutputBoundary {
-        boolean wasCalled = false;
         GenerateScheduleResponseModel lastResponse;
 
         @Override
         public void present(GenerateScheduleResponseModel responseModel) {
-            wasCalled = true;
             lastResponse = responseModel;
         }
     }
 
-    private static class MockGenerationService implements ScheduleGenerationService {
-
-        String lastDescription;
-        Map<String,String> lastFixed;
-        List<String> assigned = new ArrayList<>();
+    private static class TrackingRagRetriever extends RagRetriever {
+        boolean invoked;
+        String lastSummary;
 
         @Override
-        public Schedule generate(String routineDescription,
-                                 Map<String, String> fixedActivities) {
-
-            lastDescription = routineDescription;
-            lastFixed = fixedActivities;
-
-            Schedule schedule = new Schedule();
-
-            // MUST use addActivity — cannot modify getActivities()
-            schedule.addActivity("09:00", "MOCK_ACTIVITY");
-
-            if (fixedActivities != null) {
-                for (var e : fixedActivities.entrySet()) {
-                    schedule.addActivity(e.getKey(), e.getValue());
-                }
-            }
-
-            return schedule;
-        }
-
-        @Override
-        public String findFreeSlot(Schedule schedule) {
-            return "FREE_SLOT_TEST";
-        }
-
-        @Override
-        public void assignActivityToSlot(Schedule schedule,
-                                         String activityDescription,
-                                         float durationHours) {
-            assigned.add(activityDescription);
-
-            // Simulate adding to schedule
-            schedule.addActivity("FREE_" + assigned.size(), activityDescription);
+        public List<RoutineExample> retrieveExamples(String routineSummary, int count) {
+            invoked = true;
+            lastSummary = routineSummary;
+            return Collections.emptyList();
         }
     }
 
+    private static class StubLlmScheduleService extends LlmScheduleService {
+        List<FixedEventInput> receivedFixedEvents = new ArrayList<>();
+
+        StubLlmScheduleService() {
+            super(new plan4life.ai.PromptBuilder(new RagRetriever(false)));
+        }
+
+        @Override
+        public List<ProposedEvent> proposeSchedule(String routineSummary,
+                                                   List<RoutineEventInput> routineEvents,
+                                                   List<FixedEventInput> fixedEvents,
+                                                   List<RoutineExample> examples) {
+            receivedFixedEvents = new ArrayList<>(fixedEvents);
+            List<ProposedEvent> proposals = new ArrayList<>();
+            proposals.add(new ProposedEvent(DayOfWeek.MONDAY, LocalTime.of(7, 0), 30, "Breakfast", true));
+            return proposals;
+        }
+
+        @Override
+        public LastCallInfo getLastCallInfo() {
+            return LastCallInfo.liveModel("mock-model", receivedFixedEvents.size());
+        }
+    }
+
+    private static class CapturingConstraintSolver extends ConstraintSolver {
+        boolean called;
+
+        @Override
+        public Schedule solve(int scheduleId,
+                              String scheduleType,
+                              List<ProposedEvent> proposedEvents,
+                              List<BlockedTime> blockedTimes) {
+            called = true;
+            Schedule schedule = super.solve(scheduleId, scheduleType, proposedEvents, blockedTimes);
+            schedule.addUnplacedActivity("unplaced");
+            return schedule;
+        }
+    }
+
+    private static class InMemoryScheduleDAO implements ScheduleDataAccessInterface {
+        Schedule savedSchedule;
+
+        @Override
+        public Schedule getSchedule(int id) {
+            return savedSchedule;
+        }
+
+        @Override
+        public void saveSchedule(Schedule schedule) {
+            savedSchedule = schedule;
+        }
+    }
 }

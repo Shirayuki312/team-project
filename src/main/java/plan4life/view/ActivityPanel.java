@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import plan4life.controller.CalendarController;
 import plan4life.view.Event;
@@ -26,7 +27,7 @@ public class ActivityPanel extends JPanel {
     private CalendarController calendarController;
 
     public ActivityPanel(Schedule schedule) {
-        this.schedule = schedule;
+        this.schedule = Objects.requireNonNull(schedule, "schedule must not be null");
 
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Activities"));

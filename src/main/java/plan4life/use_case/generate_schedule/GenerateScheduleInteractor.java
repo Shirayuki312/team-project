@@ -5,8 +5,8 @@ import plan4life.ai.LlmScheduleService;
 import plan4life.ai.ProposedEvent;
 import plan4life.ai.RagRetriever;
 import plan4life.ai.RoutineEventInput;
-import plan4life.entities.Schedule;
 import plan4life.data_access.ScheduleDataAccessInterface;
+import plan4life.entities.Schedule;
 import plan4life.solver.ConstraintSolver;
 
 import java.time.DayOfWeek;
@@ -17,60 +17,41 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.util.Map;
-import java.util.Objects;
-
 public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary {
+    private static final int EXAMPLE_COUNT = 2;
+    private static final Pattern FIXED_EVENT_PATTERN = Pattern.compile(
+            "(?i)^(mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\\s+" +
+                    "(\\d{1,2}:\\d{2})(?:\\s*-\\s*(\\d{1,2}:\\d{2}))?(?:\\s+(\\d+))?\\s+(.+)$");
+
     private final GenerateScheduleOutputBoundary presenter;
-    private final ScheduleGenerationService generationService;
     private final RagRetriever ragRetriever;
     private final LlmScheduleService llmScheduleService;
     private final ConstraintSolver constraintSolver;
     private final ScheduleDataAccessInterface scheduleDAO;
 
     public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter,
-                                      ScheduleGenerationService generationService) {
-        this.presenter = Objects.requireNonNull(presenter);
-        this.generationService = Objects.requireNonNull(generationService);
-    private static final int EXAMPLE_COUNT = 2;
-    private static final Pattern FIXED_EVENT_PATTERN = Pattern.compile(
-            "(?i)^(mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\\s+" +
-                    "(\\d{1,2}:\\d{2})(?:\\s*-\\s*(\\d{1,2}:\\d{2}))?(?:\\s+(\\d+))?\\s+(.+)$");
-
-    public GenerateScheduleInteractor(GenerateScheduleOutputBoundary presenter,
                                       RagRetriever ragRetriever,
                                       LlmScheduleService llmScheduleService,
                                       ConstraintSolver constraintSolver,
                                       ScheduleDataAccessInterface scheduleDAO) {
-        this.presenter = presenter;
-        this.ragRetriever = ragRetriever;
-        this.llmScheduleService = llmScheduleService;
-        this.constraintSolver = constraintSolver;
-        this.scheduleDAO = scheduleDAO;
+        this.presenter = Objects.requireNonNull(presenter);
+        this.ragRetriever = Objects.requireNonNull(ragRetriever);
+        this.llmScheduleService = Objects.requireNonNull(llmScheduleService);
+        this.constraintSolver = Objects.requireNonNull(constraintSolver);
+        this.scheduleDAO = Objects.requireNonNull(scheduleDAO);
     }
 
     @Override
     public void execute(GenerateScheduleRequestModel requestModel) {
-
         if (requestModel == null) {
             presenter.present(new GenerateScheduleResponseModel(new Schedule()));
             return;
         }
 
-        String description = requestModel.getRoutineDescription();
-        Map<String, String> fixed = requestModel.getFixedActivities();
-
-        // Step 1 — generate base schedule
-        Schedule schedule = generationService.generate(description, fixed);
-
-        // Step 2 — place free activities ("desc:duration")
-        for (String free : requestModel.getFreeActivities()) {
-
-            String[] parts = free.split(":");
-            String activityDesc = parts[0].trim();
         String routineSummary = requestModel.getRoutineDescription();
         List<FixedEventInput> fixedEvents = parseFixedEvents(requestModel.getFixedActivities());
         List<RoutineEventInput> routineEvents = Collections.emptyList();
@@ -165,13 +146,6 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             return Optional.empty();
         }
 
-            float duration = 1.0f;
-            if (parts.length > 1) {
-                try {
-                    duration = Float.parseFloat(parts[1].trim());
-                } catch (NumberFormatException ignore) { // duration will be 1.0f by default
-                }
-            }
         return Optional.of(new FixedEventInput(day, start, durationMinutes, name, true));
     }
 
@@ -192,13 +166,6 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
         };
     }
 
-            generationService.assignActivityToSlot(schedule, activityDesc, duration);
-        }
-
-        // Step 3 — output
-        presenter.present(new GenerateScheduleResponseModel(schedule));
-    }
-}
     private int parseDuration(LocalTime start, LocalTime end, String durationGroup) {
         if (durationGroup != null && !durationGroup.isBlank()) {
             try {

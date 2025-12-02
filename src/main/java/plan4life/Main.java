@@ -26,9 +26,6 @@ import plan4life.use_case.block_off_time.BlockOffTimeOutputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
-import plan4life.use_case.generate_schedule.ScheduleGenerationService;
-// [关键修复] 必须导入这个 Mock 类
-import plan4life.use_case.generate_schedule.MockScheduleGenerationService;
 
 // --- Use Cases: Lock Activity ---
 import plan4life.use_case.lock_activity.LockActivityInputBoundary;
@@ -115,13 +112,6 @@ public class Main {
             SetReminderOutputBoundary reminderPresenter = new SetReminderPresenter();
             SetReminderInputBoundary setReminderInteractor =
                     new SetReminderInteractor(reminderDAO, reminderPresenter);
-
-            // NEW generator supporting duration and dayIndex keys
-            ScheduleGenerationService generator =
-                    new MockScheduleGenerationService();
-
-            GenerateScheduleInputBoundary scheduleInput =
-                    new GenerateScheduleInteractor(schedulePresenter, generator);
 
             LockActivityOutputBoundary lockPresenter = new CalendarPresenter(view);
             LockActivityInputBoundary lockInteractor =

@@ -35,21 +35,16 @@ public class LockActivityInteractor implements LockActivityInputBoundary {
 
         // Apply lock/unlock actions
         for (String key : requestModel.getLockedSlots()) {
-            if(schedule.isLockedKey(key)) {
+            if (schedule.isLockedKey(key)) {
                 schedule.unlockSlotKey(key);
             } else {
                 schedule.lockSlotKey(key);
             }
         }
-        // Build new schedule preserving locked slots
-        Schedule updatedSchedule = existing;
-
         // Replace locked set with the user selection while keeping all activities/blocks intact
-        updatedSchedule.replaceLockedSlotKeys(requestModel.getLockedSlots());
+        schedule.replaceLockedSlotKeys(requestModel.getLockedSlots());
 
-        // Save and present the same schedule so visual blocks remain visible
-        scheduleDAO.saveSchedule(updatedSchedule);
-        presenter.present(new LockActivityResponseModel(updatedSchedule));
+        // Save and present the updated schedule once
         scheduleDAO.saveSchedule(schedule);
         presenter.present(new LockActivityResponseModel(schedule));
     }

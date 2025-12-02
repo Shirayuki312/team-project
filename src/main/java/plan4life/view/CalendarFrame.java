@@ -150,7 +150,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             if (calendarController != null) {
 
                 String routineDescription = getRoutineDescription();
-                Map<String, String> fixedActivities = getFixedActivities();
+                String fixedActivities = getFixedActivitiesAsText();
                 List<String> freeActivities = getFreeActivities();
 
                 if (routineDescription == null) {
@@ -207,7 +207,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
                 return;
             }
 
-            calendarController.generateSchedule(routineText, fixedActivities);
+            calendarController.generateSchedule(routineText, fixedActivities, getFreeActivities());
         });
 
         // --- 5. ADD SETTINGS BUTTON LOGIC ---

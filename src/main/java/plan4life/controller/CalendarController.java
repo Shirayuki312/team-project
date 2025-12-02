@@ -60,8 +60,8 @@ public class CalendarController {
     }
 
     public void generateSchedule(String routineDescription,
-                                 Map<String, String> fixedActivities,
-                                 List<String>freeActivities) {
+                                 String fixedActivities,
+                                 List<String> freeActivities) {
         GenerateScheduleRequestModel request = new GenerateScheduleRequestModel(routineDescription,
                 fixedActivities, freeActivities);
         generateScheduleInteractor.execute(request);

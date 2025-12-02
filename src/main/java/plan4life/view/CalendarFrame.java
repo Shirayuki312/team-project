@@ -35,6 +35,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private ResourceBundle bundle;
     private JButton dayBtn;
     private JButton weekBtn;
+    private JButton blockedTimesBtn;
     private JButton generateBtn;
     private JButton settingsBtn;
 
@@ -68,8 +69,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         leftPanel.add(weekBtn);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        blockedTimesBtn = new JButton();
         generateBtn = new JButton();
         settingsBtn = new JButton();
+        rightPanel.add(blockedTimesBtn);
         rightPanel.add(generateBtn);
         rightPanel.add(settingsBtn);
 
@@ -99,6 +102,13 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
+
+        blockedTimesBtn.addActionListener(e -> {
+            if (currentSchedule == null) return;
+
+            currentSchedule.clearBlockedTimes();
+            displaySchedule(currentSchedule);
+        });
 
         generateBtn.addActionListener(e -> {
             if (calendarController != null) {
@@ -221,6 +231,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             setTitle(bundle.getString("app.title"));
             dayBtn.setText(bundle.getString("btn.day"));
             weekBtn.setText(bundle.getString("btn.week"));
+            blockedTimesBtn.setText(bundle.getString("btn.blockedTimes"));
             generateBtn.setText(bundle.getString("btn.generate"));
             settingsBtn.setText(bundle.getString("btn.settings"));
             activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));

@@ -197,5 +197,9 @@ public class Schedule {
     public void addUnlockedBlockForTest(ScheduledBlock block) {
         unlockedBlocks.add(block);
     }
+
+    public void clearBlockedTimes() {
+        this.blockedTimes.clear();
+    }
 }
 

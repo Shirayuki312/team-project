@@ -87,14 +87,57 @@ public class ConstraintSolver {
         List<ProposedEvent> flexible = ordered.stream()
                 .filter(event -> !event.isLocked())
                 .collect(Collectors.toCollection(ArrayList::new));
+        Map<Integer, Integer> occupiedHours = countOccupiedHours(occupancy);
         Collections.shuffle(flexible, random);
-        System.out.printf("[ConstraintSolver] placing %d flexible events in randomized order.%n", flexible.size());
+        flexible.sort(Comparator
+                .comparing((ProposedEvent e) -> occupiedHours.getOrDefault(toColumnIndex(e.getDay()), 0))
+                .thenComparing(ProposedEvent::getDay));
+        System.out.printf("[ConstraintSolver] placing %d flexible events in balanced order.%n", flexible.size());
 
         for (ProposedEvent event : flexible) {
             placeFlexibleEvent(schedule, occupancy, event);
         }
 
+        logPerDaySummary(schedule);
+
         return schedule;
+    }
+
+    private void logPerDaySummary(Schedule schedule) {
+        int[] counts = new int[DAYS_IN_WEEK];
+        schedule.getLockedBlocks().forEach(block -> incrementDayCount(counts, block.getStart().getDayOfWeek()));
+        schedule.getUnlockedBlocks().forEach(block -> incrementDayCount(counts, block.getStart().getDayOfWeek()));
+
+        String[] abbreviations = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        String summary = "[ConstraintSolver] per-day placed counts:";
+        for (int i = 0; i < DAYS_IN_WEEK; i++) {
+            summary += " " + abbreviations[i] + "=" + counts[i];
+        }
+        System.out.println(summary);
+    }
+
+    private void incrementDayCount(int[] counts, DayOfWeek day) {
+        int index = toColumnIndex(day);
+        if (index >= 0 && index < counts.length) {
+            counts[index]++;
+        }
+    }
+
+    private Map<Integer, Integer> countOccupiedHours(Map<Integer, boolean[]> occupancy) {
+        Map<Integer, Integer> counts = new HashMap<>();
+        if (occupancy == null) {
+            return counts;
+        }
+        for (Map.Entry<Integer, boolean[]> entry : occupancy.entrySet()) {
+            int hours = 0;
+            for (boolean filled : entry.getValue()) {
+                if (filled) {
+                    hours++;
+                }
+            }
+            counts.put(entry.getKey(), hours);
+        }
+        return counts;
     }
 
     private Map<Integer, boolean[]> initializeGrid() {

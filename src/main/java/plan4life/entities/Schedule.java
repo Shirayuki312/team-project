@@ -243,6 +243,15 @@ public class Schedule {
         unlockedBlocks.add(block);
     }
 
+    public void clearBlockedTimes() {
+        this.blockedTimes.clear();
+    }
+
+    public void clearLockedSlotKeys() {
+        lockedSlotKeys.clear();
+    }
+}
+
     private ParsedTimeKey parseTimeKey(String timeKey) {
         if (timeKey == null || !timeKey.contains(" ")) {
             return null;

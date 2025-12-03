@@ -14,6 +14,7 @@ import java.util.ResourceBundle;
 import plan4life.controller.CalendarController;
 import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
+import plan4life.entities.Event;
 import plan4life.use_case.block_off_time.BlockOffTimeController;
 import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
@@ -41,6 +42,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private ResourceBundle bundle;
     private JButton dayBtn;
     private JButton weekBtn;
+    private JButton clearBlockedTimesBtn;
     private JButton generateBtn;
     private JButton settingsBtn;
 
@@ -74,8 +76,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         leftPanel.add(weekBtn);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        clearBlockedTimesBtn = new JButton();
         generateBtn = new JButton();
         settingsBtn = new JButton();
+        rightPanel.add(clearBlockedTimesBtn);
         rightPanel.add(generateBtn);
         rightPanel.add(settingsBtn);
 
@@ -120,6 +124,31 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
+
+        clearBlockedTimesBtn.addActionListener(e -> {
+            if (currentSchedule == null) return;
+
+            currentSchedule.clearBlockedTimes();
+            currentSchedule.clearLockedSlotKeys();
+
+            displaySchedule(currentSchedule);
+        });
+
+        generateBtn.addActionListener(e -> {
+            if (calendarController != null) {
+
+                String routineDescription = getRoutineDescription();
+                Map<String, String> fixedActivities = getFixedActivities();
+                List<String> freeActivities = getFreeActivities();
+
+                if (routineDescription == null) {
+                    showMessage("Schedule generation cancelled.");
+                    return;
+                }
+
+                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
+            }
+        });
         add(generatorInputPanel, BorderLayout.SOUTH);
 
         dayBtn.addActionListener(e -> {
@@ -230,6 +259,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             setTitle(bundle.getString("app.title"));
             dayBtn.setText(bundle.getString("btn.day"));
             weekBtn.setText(bundle.getString("btn.week"));
+            clearBlockedTimesBtn.setText(bundle.getString("btn.clearBlockedTimes"));
             generateBtn.setText(bundle.getString("btn.generate"));
             settingsBtn.setText(bundle.getString("btn.settings"));
             activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));
@@ -242,6 +272,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             System.err.println("Could not load language bundle: " + e.getMessage());
             dayBtn.setText("Day");
             weekBtn.setText("Week");
+            clearBlockedTimesBtn.setText("Clear Blocked Times");
             generateBtn.setText("Generate Schedule");
             settingsBtn.setText("Settings");
             updateCalendarTitle();
@@ -319,6 +350,52 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         calendarPanel.repaint();
     }
 
+    public void highlightReminderCell(String timeKey, Event.UrgencyLevel level) {
+        if (timeKey == null) return;
+
+        Color urgencyColor;
+        switch (level) {
+            case LOW:
+                urgencyColor = new Color(8, 239, 204);
+                break;
+            case MEDIUM:
+                urgencyColor = new Color(65, 243, 6);
+                break;
+            case HIGH:
+                urgencyColor = new Color(200, 120, 0);
+                break;
+            default:
+                urgencyColor = Color.GRAY;
+        }
+
+        boolean isLocked = currentSchedule != null
+                && currentSchedule.isLockedKey(timeKey);
+
+        calendarPanel.colorCell(timeKey, urgencyColor, "!", isLocked);
+    }
+
+    public void resetReminderCell(String timeKey) {
+        if (timeKey == null) return;
+
+        boolean isLocked = currentSchedule != null
+                && currentSchedule.isLockedKey(timeKey);
+
+        String activityName = (currentSchedule != null)
+                ? currentSchedule.getActivities().getOrDefault(timeKey, "")
+                : "";
+
+        if (!activityName.isEmpty()) {
+            java.util.Random random = new java.util.Random();
+            Color color = new Color(random.nextInt(156) + 100,
+                    random.nextInt(156) + 100,
+                    random.nextInt(156) + 100);
+            calendarPanel.colorCell(timeKey, color, activityName, isLocked);
+        } else {
+            calendarPanel.colorCell(timeKey, Color.WHITE, null, isLocked);
+        }
+    }
+
+
     /**
      * Called when the user selects a time range on the calendar.
      * We use this both to:
@@ -326,7 +403,11 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
      * - create an Event and open the reminder dialog (Use Case 7).
      */
     @Override
-    public void onTimeSelected(LocalDateTime start, LocalDateTime end, int scheduleId, int columnIndex) {
+    public void onTimeSelected(LocalDateTime start,
+                               LocalDateTime end,
+                               int scheduleId,
+                               int columnIndex) {
+
         String description = JOptionPane.showInputDialog(this,
                 "Optional description for this blocked time:");
 
@@ -336,23 +417,24 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         }
 
         // ---------- Reminder flow (Use Case 7) ----------
+        Event event = null;
+
         if (calendarController != null) {
-            // Use the description as the event title (fallback to "Activity")
             String title = description.isBlank() ? "Activity" : description;
 
-            // Create an Event for this time range
-            Event event = new Event(title, start, end);
+            // 1) create Event
+            event = new Event(title, start, end);
 
-            // 1) Let the controller know this event exists
+            // 2) register it
             calendarController.registerEvent(event);
 
-            // 2) Open the ReminderDialog; when user clicks OK,
-            //    ReminderDialog.onOk() will call:
-            //    - setImportantReminderForEvent(...)
-            //    - or setImportantReminderForAllEvents(...)
+            // 3) compute timeKey to match displaySchedule / colorCell
+            String timeKey = columnIndex + ":" + start.getHour();
+
+            // 4) open ReminderDialog WITH timeKey
             ReminderDialog dialog =
-                    new ReminderDialog(this, calendarController, event);
-            dialog.setVisible(true);
+                    new ReminderDialog(this, calendarController, event, timeKey);
+            dialog.setVisible(true);   // modal, blocks until user closes
         }
 
         blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);

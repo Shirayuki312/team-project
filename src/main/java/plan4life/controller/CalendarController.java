@@ -1,7 +1,7 @@
 package plan4life.controller;
 
-import plan4life.view.Event;
-import plan4life.view.Event.UrgencyLevel;
+import plan4life.entities.Event;
+import plan4life.entities.Event.UrgencyLevel;
 
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleRequestModel;
@@ -45,6 +45,8 @@ public class CalendarController {
      * All events known to the controller (for "apply to all events").
      */
     private final List<Event> events = new ArrayList<>();
+    // NEW: track which events already have a reminder configured
+    private final Set<Event> eventsWithReminder = new HashSet<>();
     private final SetReminderInputBoundary setReminderInteractor;
 
 
@@ -148,6 +150,8 @@ public class CalendarController {
                 playSound,
                 true    // isImportant = true
         );
+        // NEW: remember that this event now has a reminder
+        eventsWithReminder.add(event);
     }
 
 
@@ -189,7 +193,8 @@ public class CalendarController {
     }
 
 
-    public void setImportantReminderForAllEvents(int minutesBefore,
+    public void setImportantReminderForAllEvents(Event sourceEvent,
+                                                 int minutesBefore,
                                                  String alertType,
                                                  UrgencyLevel urgencyLevel,
                                                  boolean sendMessage,
@@ -206,6 +211,38 @@ public class CalendarController {
         }
 
         for (Event e : events) {
+
+            // NEW: only touch
+            //  - the current sourceEvent, OR
+            //  - events that already had a reminder before
+            if (e != sourceEvent && !eventsWithReminder.contains(e)) {
+                // This event never had a reminder, and it's not the one user is editing now.
+                // Do NOT auto-add reminder for it.
+                continue;
+            }
+
+            boolean sameMinutes =
+                    e.getReminderMinutesBefore() != null
+                            && e.getReminderMinutesBefore() == minutesBefore;
+
+            boolean sameAlert =
+                    (e.getAlertType() == null && alertType == null)
+                            || (e.getAlertType() != null && e.getAlertType().equals(alertType));
+
+            boolean sameUrgency =
+                    (e.getUrgencyLevel() == null && urgencyLevel == null)
+                            || (e.getUrgencyLevel() != null && e.getUrgencyLevel().equals(urgencyLevel));
+
+            boolean sameChannels =
+                    e.isSendMessage() == sendMessage
+                            && e.isSendEmail() == sendEmail
+                            && e.isPlaySound() == playSound;
+
+            if (e.isImportant() && sameMinutes && sameAlert && sameUrgency && sameChannels) {
+                // This event already has an identical reminder; do NOT re-schedule it.
+                continue;
+            }
+
             setImportantReminderForEvent(
                     e,
                     minutesBefore,
@@ -216,6 +253,7 @@ public class CalendarController {
                     playSound
             );
         }
+
     }
 
 
@@ -229,6 +267,16 @@ public class CalendarController {
      */
     public void cancelImportantReminder(Event event) {
         if (event == null) return;
+
+        if (!event.isImportant()) {
+            JOptionPane.showMessageDialog(
+                    null,
+                    "This event has no reminder. It cannot remove reminder.",
+                    "No reminder to remove",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
 
         // Clear view-layer metadata
         event.setImportant(false);
@@ -249,31 +297,10 @@ public class CalendarController {
                 false,
                 false   // isImportant = false -> cancel
         );
+        // NEW: this event no longer has an active reminder
+        eventsWithReminder.remove(event);
     }
-
-    // =========================================================
-    //               Actual Reminder Popup Display
-    // =========================================================
-
-    /**
-     * Displays the reminder pop-up and, depending on the event settings,
-     * may also play a sound and show simulated "message" and "email" notifications.
-     */
-    private void showReminderPopup(Event event) {
-        // Decide whether to beep
-        boolean shouldBeep =
-                event.isPlaySound()
-                        || "Message with sound".equalsIgnoreCase(event.getAlertType());
-
-        if (shouldBeep) {
-            // Double beep to make it more audible
-            for (int i = 0; i < 2; i++) {
-                Toolkit.getDefaultToolkit().beep();
-                try {
-                    Thread.sleep(150);
-                } catch (InterruptedException ignored) {}
-            }
-        }
+}
 
         // Base reminder popup (what the user definitely sees)
         StringBuilder msg = new StringBuilder();
@@ -288,3 +315,40 @@ public class CalendarController {
         );
     }
 }
+//    // =========================================================
+//    //               Actual Reminder Popup Display
+//    // =========================================================
+//
+//    /**
+//     * Displays the reminder pop-up and, depending on the event settings,
+//     * may also play a sound and show simulated "message" and "email" notifications.
+//     */
+//    private void showReminderPopup(Event event) {
+//        // Decide whether to beep
+//        boolean shouldBeep =
+//                event.isPlaySound()
+//                        || "Message with sound".equalsIgnoreCase(event.getAlertType());
+//
+//        if (shouldBeep) {
+//            // Double beep to make it more audible
+//            for (int i = 0; i < 2; i++) {
+//                Toolkit.getDefaultToolkit().beep();
+//                try {
+//                    Thread.sleep(150);
+//                } catch (InterruptedException ignored) {}
+//            }
+//        }
+//
+//        // Base reminder popup (what the user definitely sees)
+//        StringBuilder msg = new StringBuilder();
+//        msg.append("Reminder: ").append(event.getTitle());
+//        msg.append(" (").append(event.getUrgencyLevel().name()).append(")");
+//
+//        JOptionPane.showMessageDialog(
+//                null,
+//                msg.toString(),
+//                "Important Reminder",
+//                JOptionPane.INFORMATION_MESSAGE
+//        );
+//    }
+//}

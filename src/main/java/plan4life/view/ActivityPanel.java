@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import plan4life.controller.CalendarController;
-import plan4life.view.Event;
+import plan4life.entities.Event;
 import plan4life.view.ReminderDialog;
 
 import java.time.LocalDate;
@@ -102,7 +102,7 @@ public class ActivityPanel extends JPanel {
 
         // ----- NEW: logic for "Set Reminder" button -----
         setReminderButton.addActionListener(e -> {
-            // 1) 必须有 CalendarController 才能设置 reminder
+
             if (calendarController == null) {
                 JOptionPane.showMessageDialog(
                         this,
@@ -113,13 +113,13 @@ public class ActivityPanel extends JPanel {
                 return;
             }
 
-            // 2) 描述，允许为空时使用默认
+
             String desc = descriptionField.getText().trim();
             if (desc.isEmpty()) {
                 desc = "New activity";
             }
 
-            // 3) 读取 duration，必须是数字
+
             String durText = durationField.getText().trim();
             double durationHours;
             try {
@@ -132,7 +132,7 @@ public class ActivityPanel extends JPanel {
                 return;
             }
 
-            // 4) 必须是 Fixed Activity 且有 start time
+
             boolean isFixedType = "Fixed Activity".equals(typeSelector.getSelectedItem());
             String start = startTimeField.getText().trim();
 
@@ -144,7 +144,7 @@ public class ActivityPanel extends JPanel {
                 return;
             }
 
-            // 5) 解析 start time: HH:mm
+
             java.time.LocalTime time;
             try {
                 time = java.time.LocalTime.parse(start); // e.g., "14:00"
@@ -156,13 +156,13 @@ public class ActivityPanel extends JPanel {
                 return;
             }
 
-            // 6) 先简单用今天日期；如果以后要按 day 下拉框映射具体日期，再扩展这里
+
             java.time.LocalDate date = java.time.LocalDate.now();
             java.time.LocalDateTime startDateTime = java.time.LocalDateTime.of(date, time);
             java.time.LocalDateTime endDateTime =
                     startDateTime.plusMinutes((long) (durationHours * 60));
 
-            // 7) 构造一个 Event，让现有的 set reminder use case 复用
+
             Event event = new Event(desc, startDateTime, endDateTime);
             calendarController.registerEvent(event);
 
@@ -174,7 +174,7 @@ public class ActivityPanel extends JPanel {
                     : null;
 
             ReminderDialog reminderDialog =
-                    new ReminderDialog(owner, calendarController, event);
+                    new ReminderDialog(owner, calendarController, event, null);
             reminderDialog.setVisible(true);
 
         });

@@ -18,15 +18,15 @@ import java.util.TimerTask;
  */
 public class SetReminderInteractor implements SetReminderInputBoundary {
 
-    private final ReminderDataAccessInterface reminderDAO;
+    private final ReminderDataAccessInterface reminderDAI;
     private final SetReminderOutputBoundary presenter;
 
     // Keeps track of active timers by reminder id
     private final Map<String, Timer> timers = new HashMap<>();
 
-    public SetReminderInteractor(ReminderDataAccessInterface reminderDAO,
+    public SetReminderInteractor(ReminderDataAccessInterface reminderDAI,
                                  SetReminderOutputBoundary presenter) {
-        this.reminderDAO = reminderDAO;
+        this.reminderDAI = reminderDAI;
         this.presenter = presenter;
     }
 
@@ -70,14 +70,19 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
         );
 
         // Persist
-        reminderDAO.saveReminder(reminder);
+        reminderDAI.saveReminder(reminder);
 
         SetReminderResponseModel scheduledResponse =
                 SetReminderResponseModel.fromEntity(reminder);
         presenter.presentReminderScheduled(scheduledResponse);
 
-        // If the time is already in the past, fire immediately
-        if (delayMillis <= 0) {
+        // Decide whether to fire immediately:
+        // 1) reminder time is in the past, OR
+        // 2) user set minutesBefore = 0  (demo-friendly: treat as "remind now")
+        boolean fireImmediately =
+                delayMillis <= 0 || requestModel.getMinutesBefore() == 0;
+
+        if (fireImmediately) {
             presenter.presentReminderFired(scheduledResponse);
             return;
         }
@@ -99,7 +104,7 @@ public class SetReminderInteractor implements SetReminderInputBoundary {
         String id = buildReminderId(requestModel);
 
         cancelTimer(id);
-        reminderDAO.deleteReminder(id);
+        reminderDAI.deleteReminder(id);
 
         // Build a lightweight Reminder object just for presenter
         Reminder dummy = new Reminder(

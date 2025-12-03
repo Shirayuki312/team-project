@@ -1,7 +1,8 @@
 package plan4life.view;
 
+import plan4life.entities.Event;
 import plan4life.controller.CalendarController;
-import plan4life.view.Event.UrgencyLevel;
+import plan4life.entities.Event.UrgencyLevel;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxUI;
@@ -21,6 +22,7 @@ public class ReminderDialog extends JDialog {
 
     private final CalendarController controller;
     private final Event event;
+    private final String timeKey;
 
     private JComboBox<String> alertTypeBox;
     private JSpinner minutesSpinner;
@@ -35,10 +37,11 @@ public class ReminderDialog extends JDialog {
 
     public ReminderDialog(Frame owner,
                           CalendarController controller,
-                          Event event) {
+                          Event event, String timeKey) {
         super(owner, "Set Important Reminder", true);
         this.controller = controller;
         this.event = event;
+        this.timeKey = timeKey;
 
         initUI();
         urgencyBox.setUI(new BasicComboBoxUI());
@@ -220,7 +223,17 @@ public class ReminderDialog extends JDialog {
         }
 
         if (applyAllEventsRadio.isSelected()) {
+
+            // Show a single success message regardless of how many events
+            // are updated underneath.
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Set Reminder successfully.",
+                    "Message",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             controller.setImportantReminderForAllEvents(
+                    event,          // NEW: sourceEvent
                     minutesBefore,
                     alertType,
                     urgencyLevel,
@@ -229,6 +242,15 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
         } else {
+
+            // Show a single success message regardless of how many events
+            // are updated underneath.
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Set Reminder successfully.",
+                    "Message",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
             controller.setImportantReminderForEvent(
                     event,
                     minutesBefore,
@@ -239,15 +261,31 @@ public class ReminderDialog extends JDialog {
                     playSound
             );
             controller.registerEvent(event);
-        }
+            // NEW: highlight the event cell by urgency
+            if (getOwner() instanceof CalendarFrame && timeKey != null) {
+                CalendarFrame frame = (CalendarFrame) getOwner();
+                frame.highlightReminderCell(timeKey, urgencyLevel);
+            }
 
-        dispose();
+            dispose();
+        }
     }
 
-    private void onRemove() {
-        if (event != null) {
-            controller.cancelImportantReminder(event);
+        private void onRemove () {
+            if (event != null) {
+                controller.cancelImportantReminder(event);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Reminder cancelled.",
+                        "Message",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                if (getOwner() instanceof CalendarFrame && timeKey != null) {
+                    CalendarFrame frame = (CalendarFrame) getOwner();
+                    frame.resetReminderCell(timeKey);
+                }
+                dispose();
+            }
         }
-        dispose();
     }
-}

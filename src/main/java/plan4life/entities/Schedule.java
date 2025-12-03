@@ -250,7 +250,6 @@ public class Schedule {
     public void clearLockedSlotKeys() {
         lockedSlotKeys.clear();
     }
-}
 
     private ParsedTimeKey parseTimeKey(String timeKey) {
         if (timeKey == null || !timeKey.contains(" ")) {

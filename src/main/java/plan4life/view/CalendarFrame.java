@@ -134,21 +134,6 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             displaySchedule(currentSchedule);
         });
 
-        generateBtn.addActionListener(e -> {
-            if (calendarController != null) {
-
-                String routineDescription = getRoutineDescription();
-                Map<String, String> fixedActivities = getFixedActivities();
-                List<String> freeActivities = getFreeActivities();
-
-                if (routineDescription == null) {
-                    showMessage("Schedule generation cancelled.");
-                    return;
-                }
-
-                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
-            }
-        });
         add(generatorInputPanel, BorderLayout.SOUTH);
 
         dayBtn.addActionListener(e -> {
@@ -315,6 +300,9 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     private void renderScheduleSnapshot(Schedule schedule, Collection<BlockedTime> newBlocks) {
         this.currentSchedule = schedule;
+        if (activityPanel != null && schedule != null) {
+            activityPanel.setSchedule(schedule);
+        }
         calendarPanel.clear();
 
         if (schedule == null) {
@@ -437,6 +425,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             dialog.setVisible(true);   // modal, blocks until user closes
         }
 
-        blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        if (blockOffTimeController != null) {
+            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
+        }
     }
 }

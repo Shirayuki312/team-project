@@ -107,6 +107,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             if (currentSchedule == null) return;
 
             currentSchedule.clearBlockedTimes();
+            currentSchedule.clearLockedSlotKeys();
+
             displaySchedule(currentSchedule);
         });
 

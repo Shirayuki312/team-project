@@ -201,5 +201,9 @@ public class Schedule {
     public void clearBlockedTimes() {
         this.blockedTimes.clear();
     }
+
+    public void clearLockedSlotKeys() {
+        lockedSlotKeys.clear();
+    }
 }
 

@@ -26,4 +26,11 @@ public class ScheduledBlock {
     public boolean overlaps(LocalDateTime otherStart, LocalDateTime otherEnd) {
         return !(otherEnd.isBefore(start) || otherStart.isAfter(end));
     }
+
+    public boolean overlaps(LocalDateTime otherStart, LocalDateTime otherEnd, int otherColumnIndex) {
+        if (this.columnIndex != otherColumnIndex) {
+            return false;
+        }
+        return overlaps(otherStart, otherEnd);
+    }
 }

@@ -1,10 +1,14 @@
+// 文件路径: src/main/java/plan4life/view/CalendarFrame.java
 package plan4life.view;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 // Import Controllers and Entities
 import plan4life.controller.CalendarController;
@@ -16,19 +20,21 @@ import plan4life.use_case.set_preferences.SetPreferencesInputBoundary;
 
 import java.time.LocalDateTime;
 import java.util.Random; // Temp till we get langchain/langgraph working
-import java.util.List;
 
 // Import Settings specific classes
 import plan4life.controller.SettingsController;
+// (ActionEvent is already imported by your teammate)
 
 public class CalendarFrame extends JFrame implements CalendarViewInterface, TimeSelectionListener {
 
     private final CalendarPanel calendarPanel;
     private final ActivityPanel activityPanel;
+    private final JTextArea routineDescriptionArea = new JTextArea(5, 30);
 
     private BlockOffTimeController blockOffTimeController;
     private CalendarController calendarController;
 
+    // --- 2. ADD SETTINGS MEMBER VARIABLES ---
     private SettingsView settingsView;
     private SettingsController settingsController;
     private SetPreferencesInputBoundary settingsInteractor;
@@ -80,6 +86,21 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         topBar.add(leftPanel, BorderLayout.WEST);
         topBar.add(rightPanel, BorderLayout.EAST);
 
+        // <--- AI Inputs Panel --->
+        routineDescriptionArea.setLineWrap(true);
+        routineDescriptionArea.setWrapStyleWord(true);
+        JPanel routinePanel = new JPanel(new BorderLayout(5, 5));
+        routinePanel.add(new JLabel("Routine Description"), BorderLayout.NORTH);
+        routinePanel.add(new JScrollPane(routineDescriptionArea), BorderLayout.CENTER);
+
+        JPanel generatorInputPanel = new JPanel(new BorderLayout(10, 10));
+        // Add a bit of padding so the inputs feel less cramped.
+        generatorInputPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Schedule Inputs"),
+                BorderFactory.createEmptyBorder(6, 6, 6, 6)));
+        generatorInputPanel.add(routinePanel, BorderLayout.CENTER);
+
+        // <--- Calendar Panel --->
         this.calendarPanel = new CalendarPanel();
         calendarPanel.setTimeSelectionListener(this);
 
@@ -113,21 +134,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             displaySchedule(currentSchedule);
         });
 
-        generateBtn.addActionListener(e -> {
-            if (calendarController != null) {
-
-                String routineDescription = getRoutineDescription();
-                Map<String, String> fixedActivities = getFixedActivities();
-                List<String> freeActivities = getFreeActivities();
-
-                if (routineDescription == null) {
-                    showMessage("Schedule generation cancelled.");
-                    return;
-                }
-
-                calendarController.generateSchedule(routineDescription, fixedActivities, freeActivities);
-            }
-        });
+        add(generatorInputPanel, BorderLayout.SOUTH);
 
         dayBtn.addActionListener(e -> {
             calendarPanel.setDayView();
@@ -143,35 +150,34 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             displaySchedule(currentSchedule);
         });
 
+        generateBtn.addActionListener(e -> {
+            if (this.calendarController == null) {
+                showMessage("Calendar controller is not configured.");
+                return;
+            }
+
+            String routineText = routineDescriptionArea.getText().trim();
+            String fixedActivities = getFixedActivitiesAsText();
+            List<String> freeActivities = getFreeActivities();
+
+            if (routineText.isBlank() && fixedActivities.isBlank() && freeActivities.isEmpty()) {
+                showMessage("Please enter a routine description or add at least one activity.");
+                return;
+            }
+
+            calendarController.generateSchedule(routineText, fixedActivities, freeActivities);
+        });
+
+        // --- 5. ADD SETTINGS BUTTON LOGIC ---
         settingsBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // When the button is clicked, show the SettingsView dialog
                 settingsView.setVisible(true);
             }
         });
 
         updateLanguage("en");
-    }
-
-    // --- GETTER FOR ROUTINE DESCRIPTION ---
-    public String getRoutineDescription() {
-        // TODO: Replace with your actual text field / textarea
-        // For now, we pop up a simple input (temporary)
-        return JOptionPane.showInputDialog(this, "Describe your routine:");
-    }
-
-    // --- GETTER FOR FIXED ACTIVITIES ---
-    public Map<String, String> getFixedActivities() {
-        Map<String, String> fixed = new HashMap<>();
-
-        for (plan4life.entities.Activity a : currentSchedule.getTasks()) {
-            if (a.isFixed()) {
-                // key example: "Gym"
-                // value example: "14:00:1.5"
-                fixed.put(a.getDescription(), a.getStartTime() + ":" + a.getDuration());
-            }
-        }
-        return fixed;
     }
 
     public List<String> getFreeActivities() {
@@ -214,6 +220,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         } catch (Exception e) {
             calendarPanel.updateTitle(fallbackTitle);
         }
+    }
+
+    private String getFixedActivitiesAsText() {
+        return activityPanel.getFixedActivitiesText();
     }
 
 
@@ -280,10 +290,27 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
 
     @Override
     public void displaySchedule(Schedule schedule) {
-        this.currentSchedule = schedule;
-        if (schedule == null) return;
+        renderScheduleSnapshot(schedule, null);
+    }
 
+    @Override
+    public void applyBlockedTimeUpdate(Schedule schedule, List<BlockedTime> changedBlocks) {
+        renderScheduleSnapshot(schedule, changedBlocks);
+    }
+
+    private void renderScheduleSnapshot(Schedule schedule, Collection<BlockedTime> newBlocks) {
+        this.currentSchedule = schedule;
+        if (activityPanel != null && schedule != null) {
+            activityPanel.setSchedule(schedule);
+        }
         calendarPanel.clear();
+
+        if (schedule == null) {
+            activityPanel.setActivities(null);
+            calendarPanel.repaint();
+            return;
+        }
+
         Random random = new Random();
 
         schedule.getActivities().forEach((time, activityName) -> {
@@ -294,11 +321,20 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             calendarPanel.colorCell(time, color, activityName, isLocked);
         });
 
+        activityPanel.setActivities(schedule.getActivities().values());
+
         if (schedule.getBlockedTimes() != null) {
             for (BlockedTime block : schedule.getBlockedTimes()) {
                 calendarPanel.colorBlockedRange(block);
             }
         }
+
+        if (newBlocks != null) {
+            for (BlockedTime block : newBlocks) {
+                calendarPanel.colorBlockedRange(block);
+            }
+        }
+
         calendarPanel.repaint();
     }
 
@@ -389,11 +425,8 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             dialog.setVisible(true);   // modal, blocks until user closes
         }
 
-        // ---------- Original block-off-time behavior ----------
         if (blockOffTimeController != null) {
-            blockOffTimeController.blockTime(
-                    scheduleId, start, end, description, columnIndex
-            );
+            blockOffTimeController.blockTime(scheduleId, start, end, description, columnIndex);
         }
     }
 }

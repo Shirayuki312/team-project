@@ -1,0 +1,20 @@
+[
+  {
+    "routineSummary": "Early riser who exercises and blocks focus time before meetings.",
+    "schedule": [
+      {"day": "MONDAY", "startTime": "06:30", "durationMinutes": 60, "name": "Morning workout", "locked": false},
+      {"day": "MONDAY", "startTime": "08:00", "durationMinutes": 120, "name": "Deep work sprint", "locked": false},
+      {"day": "TUESDAY", "startTime": "07:00", "durationMinutes": 45, "name": "Yoga and mobility", "locked": false}
+    ],
+    "rationale": "Front-loads exercise and focused tasks before the day fills with meetings."
+  },
+  {
+    "routineSummary": "Student balancing lectures, part-time work, and evening study blocks.",
+    "schedule": [
+      {"day": "MONDAY", "startTime": "10:00", "durationMinutes": 90, "name": "Attend lectures", "locked": true},
+      {"day": "WEDNESDAY", "startTime": "14:00", "durationMinutes": 180, "name": "Campus shift", "locked": true},
+      {"day": "THURSDAY", "startTime": "19:00", "durationMinutes": 120, "name": "Group study", "locked": false}
+    ],
+    "rationale": "Keeps work shifts fixed while spreading study after class time."
+  }
+]

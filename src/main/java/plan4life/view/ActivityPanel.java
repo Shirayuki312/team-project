@@ -7,6 +7,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Objects;
 
 import plan4life.controller.CalendarController;
 import plan4life.entities.Event;
@@ -26,7 +28,7 @@ public class ActivityPanel extends JPanel {
     private CalendarController calendarController;
 
     public ActivityPanel(Schedule schedule) {
-        this.schedule = schedule;
+        this.schedule = Objects.requireNonNull(schedule, "schedule must not be null");
 
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Activities"));
@@ -243,12 +245,15 @@ public class ActivityPanel extends JPanel {
     /** Delete the currently selected activity */
     private void deleteSelectedActivity() {
         int selectedIndex = activityList.getSelectedIndex();
-        if (selectedIndex == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an activity to delete.");
+        List<Activity> tasks = schedule != null ? schedule.getTasks() : Collections.emptyList();
+
+        if (selectedIndex < 0 || selectedIndex >= tasks.size()) {
+            JOptionPane.showMessageDialog(this, "Select an activity to delete.");
+            activityList.clearSelection();
             return;
         }
 
-        Activity activityToRemove = schedule.getTasks().get(selectedIndex);
+        Activity activityToRemove = tasks.get(selectedIndex);
         schedule.removeTask(activityToRemove); // Assumes Schedule has a removeTask method
         refreshActivityList();
     }
@@ -256,6 +261,7 @@ public class ActivityPanel extends JPanel {
     /** Refresh the activity list */
     public void refreshActivityList() {
         activityListModel.clear();
+        activityList.clearSelection();
         if (schedule == null) return;
 
         List<Activity> tasks = schedule.getTasks();
@@ -289,5 +295,62 @@ public class ActivityPanel extends JPanel {
             }
         }
         return free;
+    }
+
+    public String getFixedActivitiesText() {
+        List<String> fixedActivities = new ArrayList<>();
+        for (Activity activity : schedule.getTasks()) {
+            if (activity.isFixed()) {
+                fixedActivities.add(formatFixedActivity(activity));
+            }
+        }
+        return String.join("\n", fixedActivities);
+    }
+
+    private String formatFixedActivity(Activity activity) {
+        String dayPart = activity.getDayIndex() == null
+                ? ""
+                : dayName(activity.getDayIndex()) + " ";
+        String startPart = activity.getStartTime() == null ? "" : activity.getStartTime() + " ";
+
+        if (activity.getDayIndex() != null && activity.getStartTime() != null) {
+            int durationMinutes = Math.round(activity.getDuration() * 60);
+            return String.format("%s%s%d %s", dayPart, startPart, durationMinutes, activity.getDescription()).trim();
+        }
+
+        StringBuilder builder = new StringBuilder(activity.getDescription());
+        builder.append(" (")
+                .append(activity.getDuration())
+                .append("h");
+        if (activity.getDayIndex() != null) {
+            builder.append(", ").append(dayName(activity.getDayIndex()));
+        }
+        if (activity.getStartTime() != null) {
+            builder.append(" @ ").append(activity.getStartTime());
+        }
+        builder.append(')');
+        return builder.toString();
+    }
+
+    private String dayName(int dayIndex) {
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        if (dayIndex < 0 || dayIndex >= days.length) {
+            return "";
+        }
+        return days[dayIndex];
+    }
+
+    /**
+     * Display the activities that were placed on the calendar so testers can scan them quickly.
+     */
+    public void setActivities(Iterable<String> activities) {
+        activityListModel.clear();
+        activityList.clearSelection();
+        if (activities == null) {
+            return;
+        }
+        for (String activity : activities) {
+            activityListModel.addElement(activity);
+        }
     }
 }

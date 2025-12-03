@@ -6,6 +6,10 @@ import javax.swing.SwingUtilities;
 import plan4life.data_access.*;
 
 import plan4life.entities.Schedule;
+import plan4life.ai.LlmScheduleService;
+import plan4life.ai.PromptBuilder;
+import plan4life.ai.RagRetriever;
+import plan4life.solver.ConstraintSolver;
 
 // --- Presenters ---
 import plan4life.presenter.CalendarPresenter;
@@ -22,9 +26,6 @@ import plan4life.use_case.block_off_time.BlockOffTimeOutputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInputBoundary;
 import plan4life.use_case.generate_schedule.GenerateScheduleInteractor;
 import plan4life.use_case.generate_schedule.GenerateScheduleOutputBoundary;
-import plan4life.use_case.generate_schedule.ScheduleGenerationService;
-// [关键修复] 必须导入这个 Mock 类
-import plan4life.use_case.generate_schedule.MockScheduleGenerationService;
 
 // --- Use Cases: Lock Activity ---
 import plan4life.use_case.lock_activity.LockActivityInputBoundary;
@@ -89,6 +90,20 @@ public class Main {
             // 5. GENERATE-SCHEDULE + LOCK LOGIC
             // ============================================================
             GenerateScheduleOutputBoundary schedulePresenter = new CalendarPresenter(view);
+            RagRetriever ragRetriever = new RagRetriever();
+            PromptBuilder promptBuilder = new PromptBuilder(ragRetriever);
+            LlmScheduleService llmScheduleService = new LlmScheduleService(promptBuilder);
+            String configuredModel = LlmScheduleService.resolveModelId();
+            boolean hasApiKey = System.getenv("HUGGINGFACE_API_KEY") != null
+                    && !System.getenv("HUGGINGFACE_API_KEY").isBlank();
+            System.out.printf("[Main] LLM configured model: %s (API key present: %b)%n", configuredModel, hasApiKey);
+            ConstraintSolver constraintSolver = new ConstraintSolver();
+            GenerateScheduleInputBoundary scheduleInput = new GenerateScheduleInteractor(
+                    schedulePresenter,
+                    ragRetriever,
+                    llmScheduleService,
+                    constraintSolver,
+                    scheduleDAO);
 
             // ============================================================
             // 6. set reminder
@@ -97,13 +112,6 @@ public class Main {
             SetReminderOutputBoundary reminderPresenter = new SetReminderPresenter();
             SetReminderInputBoundary setReminderInteractor =
                     new SetReminderInteractor(reminderDAO, reminderPresenter);
-
-            // NEW generator supporting duration and dayIndex keys
-            ScheduleGenerationService generator =
-                    new MockScheduleGenerationService();
-
-            GenerateScheduleInputBoundary scheduleInput =
-                    new GenerateScheduleInteractor(schedulePresenter, generator);
 
             LockActivityOutputBoundary lockPresenter = new CalendarPresenter(view);
             LockActivityInputBoundary lockInteractor =

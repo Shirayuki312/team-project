@@ -20,6 +20,19 @@ public class CalendarPresenter implements
     public void present(GenerateScheduleResponseModel response) {
         Schedule schedule = response.getSchedule();
         view.displaySchedule(schedule);
+
+        if (response.getMessage() != null && !response.getMessage().isBlank()) {
+            view.showMessage(response.getMessage());
+            return;
+        }
+
+        if (schedule == null) {
+            view.showMessage("No schedule available to display.");
+        } else if (schedule.getActivities().isEmpty()
+                && schedule.getLockedBlocks().isEmpty()
+                && schedule.getUnlockedBlocks().isEmpty()) {
+            view.showMessage("No plan could be created. Please adjust your inputs and try again.");
+        }
     }
 
     @Override
@@ -31,7 +44,7 @@ public class CalendarPresenter implements
     @Override
     public void present(BlockOffTimeResponseModel response) {
         if (response.getUpdatedSchedule() != null) {
-            view.displaySchedule(response.getUpdatedSchedule());
+            view.applyBlockedTimeUpdate(response.getUpdatedSchedule(), response.getUpdatedBlockedTimes());
         }
         view.showMessage(response.getMessage());
     }

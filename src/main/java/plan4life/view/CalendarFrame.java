@@ -36,6 +36,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
     private ResourceBundle bundle;
     private JButton dayBtn;
     private JButton weekBtn;
+    private JButton clearBlockedTimesBtn;
     private JButton generateBtn;
     private JButton settingsBtn;
 
@@ -69,8 +70,10 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         leftPanel.add(weekBtn);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        clearBlockedTimesBtn = new JButton();
         generateBtn = new JButton();
         settingsBtn = new JButton();
+        rightPanel.add(clearBlockedTimesBtn);
         rightPanel.add(generateBtn);
         rightPanel.add(settingsBtn);
 
@@ -100,6 +103,15 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
         add(topBar, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
         add(activityPanel, BorderLayout.EAST);
+
+        clearBlockedTimesBtn.addActionListener(e -> {
+            if (currentSchedule == null) return;
+
+            currentSchedule.clearBlockedTimes();
+            currentSchedule.clearLockedSlotKeys();
+
+            displaySchedule(currentSchedule);
+        });
 
         generateBtn.addActionListener(e -> {
             if (calendarController != null) {
@@ -222,6 +234,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             setTitle(bundle.getString("app.title"));
             dayBtn.setText(bundle.getString("btn.day"));
             weekBtn.setText(bundle.getString("btn.week"));
+            clearBlockedTimesBtn.setText(bundle.getString("btn.clearBlockedTimes"));
             generateBtn.setText(bundle.getString("btn.generate"));
             settingsBtn.setText(bundle.getString("btn.settings"));
             activityPanel.setBorder(BorderFactory.createTitledBorder(bundle.getString("label.activities")));
@@ -234,6 +247,7 @@ public class CalendarFrame extends JFrame implements CalendarViewInterface, Time
             System.err.println("Could not load language bundle: " + e.getMessage());
             dayBtn.setText("Day");
             weekBtn.setText("Week");
+            clearBlockedTimesBtn.setText("Clear Blocked Times");
             generateBtn.setText("Generate Schedule");
             settingsBtn.setText("Settings");
             updateCalendarTitle();

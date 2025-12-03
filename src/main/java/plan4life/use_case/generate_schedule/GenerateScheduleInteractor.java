@@ -7,18 +7,24 @@ import plan4life.ai.RagRetriever;
 import plan4life.ai.RoutineEventInput;
 import plan4life.ai.TimeFormats;
 import plan4life.data_access.ScheduleDataAccessInterface;
+import plan4life.entities.BlockedTime;
 import plan4life.entities.Schedule;
+import plan4life.entities.ScheduledBlock;
 import plan4life.solver.ConstraintSolver;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,6 +71,13 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             return;
         }
 
+        final int scheduleId = 2;
+        Schedule existingSchedule = scheduleDAO.getSchedule(scheduleId);
+        List<ProposedEvent> lockedCarryOver = collectLockedEvents(existingSchedule);
+        List<BlockedTime> existingBlockedTimes = existingSchedule == null
+                ? Collections.emptyList()
+                : new ArrayList<>(existingSchedule.getBlockedTimes());
+
         try {
             List<RagRetriever.RoutineExample> examples = ragRetriever.retrieveExamples(routineSummary, EXAMPLE_COUNT);
             List<ProposedEvent> proposals = llmScheduleService.proposeSchedule(routineSummary, routineEvents, fixedEvents, examples);
@@ -74,7 +87,12 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             System.out.printf("[GenerateScheduleInteractor] generation mode: %s%n",
                     lastCall != null && lastCall.usedLiveModel() ? "live AI" : "fallback / heuristic");
 
-            Schedule schedule = constraintSolver.solve(2, "week", proposals, Collections.emptyList());
+            List<ProposedEvent> combinedProposals = new ArrayList<>(lockedCarryOver);
+            if (proposals != null) {
+                combinedProposals.addAll(proposals);
+            }
+
+            Schedule schedule = constraintSolver.solve(scheduleId, "week", combinedProposals, existingBlockedTimes);
             scheduleDAO.saveSchedule(schedule);
             presenter.present(new GenerateScheduleResponseModel(schedule,
                     buildGenerationMessage(schedule, llmScheduleService.getLastCallInfo())));
@@ -186,5 +204,74 @@ public class GenerateScheduleInteractor implements GenerateScheduleInputBoundary
             }
         }
         return 60;
+    }
+
+    private List<ProposedEvent> collectLockedEvents(Schedule existingSchedule) {
+        if (existingSchedule == null) {
+            return Collections.emptyList();
+        }
+
+        Set<String> seenKeys = new HashSet<>();
+        List<ProposedEvent> lockedEvents = new ArrayList<>();
+
+        for (ScheduledBlock block : existingSchedule.getLockedBlocks()) {
+            ProposedEvent locked = toLockedEvent(block);
+            if (locked != null && seenKeys.add(formatKey(locked.getDay(), locked.getStartTime()))) {
+                lockedEvents.add(locked);
+            }
+        }
+
+        existingSchedule.getLockedSlotKeys().forEach(key -> {
+            ProposedEvent event = toLockedEvent(key, existingSchedule);
+            if (event != null && seenKeys.add(formatKey(event.getDay(), event.getStartTime()))) {
+                lockedEvents.add(event);
+            }
+        });
+
+        return lockedEvents;
+    }
+
+    private ProposedEvent toLockedEvent(ScheduledBlock block) {
+        if (block == null) {
+            return null;
+        }
+        DayOfWeek day = block.getStart().getDayOfWeek();
+        LocalTime start = block.getStart().toLocalTime();
+        int duration = (int) Duration.between(block.getStart(), block.getEnd()).toMinutes();
+        if (duration <= 0) {
+            duration = 60;
+        }
+        return new ProposedEvent(day, start, duration, block.getActivityName(), true);
+    }
+
+    private ProposedEvent toLockedEvent(String timeKey, Schedule schedule) {
+        if (timeKey == null || schedule == null) {
+            return null;
+        }
+
+        String[] parts = timeKey.split(" ");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        DayOfWeek day = parseDay(parts[0]);
+        if (day == null) {
+            return null;
+        }
+
+        try {
+            LocalTime start = LocalTime.parse(parts[1], DateTimeFormatter.ofPattern("HH:mm"));
+            String name = schedule.getActivities().get(timeKey);
+            if (name == null || name.isBlank()) {
+                return null;
+            }
+            return new ProposedEvent(day, start, 60, name, true);
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    private String formatKey(DayOfWeek day, LocalTime time) {
+        return day + "|" + time;
     }
 }

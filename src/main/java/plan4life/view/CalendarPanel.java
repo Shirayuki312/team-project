@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -190,7 +191,7 @@ public class CalendarPanel extends JPanel {
         int c = getColumnFromX(p.x);
         int r = getRowFromY(p.y);
         if (r >= 0 && c >= 0) {
-            String key = c + ":" + r;
+            String key = toTimeKey(c, toHour(r));
             lockListener.onLockToggle(key);
         }
     }
@@ -312,6 +313,8 @@ public class CalendarPanel extends JPanel {
                 return;
             }
 
+            String normalizedTimeKey = toTimeKey(parsed.columnIndex, parsed.hour);
+
             int rowIndex = toRow(parsed.hour);
             int columnIndex = currentColumns == 1 ? 0 : parsed.columnIndex;
             if (columnIndex < 0 || columnIndex >= currentColumns) {
@@ -335,7 +338,7 @@ public class CalendarPanel extends JPanel {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (lockListener != null) {
-                        lockListener.onLockToggle(timeKey);
+                        lockListener.onLockToggle(normalizedTimeKey);
                     }
                 }
             });
@@ -414,6 +417,13 @@ public class CalendarPanel extends JPanel {
     private int toHour(int row) {
         int safeRow = Math.max(0, Math.min(row, ROWS - 1));
         return Math.min(23, START_HOUR + safeRow);
+    }
+
+    private String toTimeKey(int columnIndex, int hour) {
+        DayOfWeek day = DayOfWeek.of((columnIndex % 7) + 1);
+        String dayLabel = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+        int safeHour = Math.max(0, Math.min(hour, 23));
+        return String.format("%s %02d:00", dayLabel, safeHour);
     }
 
     public void colorBlockedRange(BlockedTime bt) {

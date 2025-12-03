@@ -15,7 +15,7 @@ public class SetReminderPresenter implements SetReminderOutputBoundary {
 
     @Override
     public void presentReminderScheduled(SetReminderResponseModel responseModel) {
-     JOptionPane.showMessageDialog(null, "Reminder set successfully.");
+//     JOptionPane.showMessageDialog(null, "Reminder set successfully.");
     }
 
     @Override
@@ -69,7 +69,7 @@ public class SetReminderPresenter implements SetReminderOutputBoundary {
 
     @Override
     public void presentReminderCancelled(SetReminderResponseModel responseModel) {
-        JOptionPane.showMessageDialog(null, "Reminder cancelled.");
+//        JOptionPane.showMessageDialog(null, "Reminder cancelled.");
     }
 }
 
